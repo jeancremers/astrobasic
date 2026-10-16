@@ -76,8 +76,7 @@ examples/tools        Larger utilities
   Find Return.ab      Find planetary returns
   Library.ab          A library of reusable functions (#name(...) { })
 
-Most examples need Planetdance to run, because they use its charts,
-database and ephemeris. To read one in planetdance, use Application Edit and browse to the file.
+To read a script in planetdance, use Application Edit and browse to the file.
 
 
 License
