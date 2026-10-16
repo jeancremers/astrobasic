@@ -77,8 +77,7 @@ examples/tools        Larger utilities
   Library.ab          A library of reusable functions (#name(...) { })
 
 Most examples need Planetdance to run, because they use its charts,
-database and ephemeris. To try one: in Planetdance open the AstroBasic
-editor, load the .ab file and run it.
+database and ephemeris. To read one in planetdance, use Application Edit and browse to the file.
 
 
 License
