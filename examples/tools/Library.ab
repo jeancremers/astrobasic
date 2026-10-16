@@ -1,0 +1,94 @@
+`----------------------------------------------------------------------------------------------------------
+#getsyzygysid(real start, real lon, real lat, int sid)
+{
+real findjd;
+char findtype, findp1, findp2, findasp;
+real findr1, findr2, findorb;
+char lunation[PLANETS], asp[ASPECTS], opt[20];
+lunation[SUN] = 1;
+lunation[MOON] = 1;
+asp[CONJUNCTION] = 1;
+asp[OPPOSITION] = 1;
+opt[3] = 127; `blockno
+opt[4] = 1; `orb;
+opt[5] = sid;
+memget(127, 20, 36);
+int count = findaspect(start - 30, start + 30, lunation, asp, opt, 0, lon, lat, 0), i;
+i = 0; for (i < count)
+  {
+  memval(127, i, &findjd);
+  if (findjd > start)
+    {
+    memval(127, i - 1, &findjd);
+    ` now the longitude for sun is in findr1, and moon in findr2
+`    rulerSyz = findr2;
+`    strset(s, "%f", rulerSyz);
+    return findr2;                                                                                 ` return moon
+    }
+ }
+}
+`----------------------------------------------------------------------------------------------------------
+#getsyzygy(real start, real lon, real lat)
+{
+real findjd;                                                                                      
+char findtype, findp1, findp2, findasp;
+real findr1, findr2, findorb;
+char lunation[PLANETS], asp[ASPECTS], opt[20];
+lunation[SUN] = 1;
+lunation[MOON] = 1;
+asp[CONJUNCTION] = 1;
+asp[OPPOSITION] = 1;
+opt[3] = 127; `blockno
+opt[4] = 1; `orb;
+memget(127, 20, 36);
+int count = findaspect(start - 30, start + 30, lunation, asp, opt, 0, lon, lat, 0), i;
+i = 0; for (i < count)
+  {
+  memval(127, i, &findjd);
+  if (findjd > start)
+    {
+    memval(127, i - 1, &findjd);
+    ` now the longitude for sun is in findr1, and moon in findr2
+`    rulerSyz = findr2;
+`    strset(s, "%f", rulerSyz);
+    return findr2;                                                                                 ` return moon
+    }
+ }
+}
+`----------------------------------------------------------------------------------------------------------
+#getsyzygydate(real start, real lon, real lat)
+{
+real findjd;                                                                                      
+char findtype, findp1, findp2, findasp;
+real findr1, findr2, findorb;
+char lunation[PLANETS], asp[ASPECTS], opt[20];
+lunation[SUN] = 1;
+lunation[MOON] = 1;
+asp[CONJUNCTION] = 1;
+asp[OPPOSITION] = 1;
+opt[3] = 127; `blockno
+opt[4] = 1; `orb;
+memget(127, 20, 36);
+int count = findaspect(start - 30, start + 30, lunation, asp, opt, 0, lon, lat, 0), i;
+i = 0; for (i < count)
+  {
+  memval(127, i, &findjd);
+  if (findjd > start)
+    {
+    memval(127, i - 1, &findjd);
+    return findjd;
+    }
+ }
+}
+`----------------------------------------------------------------------------------------------------------
+#dayofweek(real jd)
+{
+return ((((integer(jd + .5) - .5) - 2433282 - 1.5) % 7) + 7) % 7;
+}
+`----------------------------------------------------------------------------------------------------------
+#planetaryday(real jd, real zone, real lon, real lat)
+{
+jd = integer(jd + .5) - .5;                                    ` midnight before birth
+jd = getriseset(jd - zone, SUN, 1, lon, lat, "");              ` sunrise that day
+return planetaryhour(jd, zone, lon, lat);                      ` planetary day
+}

@@ -1,0 +1,27 @@
+window(800, 600);
+menu(0, "Close", close);
+menu(0, "Place", p);
+char place[333] = "Null Island, Canada, 0e0, 0n0, None", ds[99] = "1 1 2000", ts[99] = "12 0 0", jds[99];
+real lon, lat, jd;
+int time[6];
+edit(10, 10, 333, ds, t);
+edit(10, 40, 333, ts, t);
+edit(10, 70, 333, jds, NULL);
+@t;
+run;
+
+:t;
+timefromstring(ds, time[0], time[1], time[2], 0);
+timefromstring(ts, time[3], time[4], time[5], 1);
+jd = timetojulian(time);
+strset(jds, "%f", jd);
+editset(2);
+return;
+
+:p;
+getplace(place, lon, lat, 1);
+setcaption(place);
+return;
+
+:close;
+  quit;

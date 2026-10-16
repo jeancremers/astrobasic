@@ -1,0 +1,135 @@
+window(0, 0);
+menu(0, "Close", Close);
+menu(0, "Horoscope", Radix);
+menu(0, "Zoom Out", ZoomOut);
+menu(0, "Zoom In", ZoomIn);
+menu(0, "Help", NULL);
+menu(5, "English", help);
+menu(5, "Nederlands", helpnl);
+updown(width - 150, 0, 0, Updown);
+label(width - 240, 0, "");
+command(UPDOWN, 0, WIDTH, 100);
+command(UPDOWN, 0, HEIGHT, 50);
+char name[100], hasradix, s[99];
+int i;
+real mx = (width - 90) / 2 + 90,
+     my = height / 2,
+     radius[14], planet[PLANETS], zoom = 1;
+copyhoroscope(-1, 0);
+setsymbolsize(1);
+@go;     
+run;
+
+:go;
+  hasradix = TRUE;
+  getradii(0, radius);
+  getplanets(0, planet);
+  getname(0, name);
+  @Status;
+  @DisplayPlanets;
+  @DisplayChart;
+  return;
+
+:Close;
+   quit;
+
+:Radix;   
+   if (TRUE = gethoroscope("", 0, ANYTYPE))
+     @go;
+   return;
+   
+:DisplayPlanets;
+   visible(FALSE);
+   i = 0;
+   for (i < 13)
+      {
+      putplanet(10, 10 + i * 26, i);
+      putrealnumber(40, 10 + i * 26, radius[i], 5);
+      }
+   visible(TRUE);
+   return;
+   
+:DisplayChart;
+   visible(FALSE);
+   fill(110, 0, mx * 2, height, -2);
+   circle(mx, my, 1, RED);
+   circle(mx, my, 2, RED);
+   i = 0;
+   for (i < 13)
+      {
+      real r = (my / 35) * radius[i] * zoom,
+           a = planet[i] + 180;
+      if (r <= my)
+         {
+         int x1, y1, x2, y2;
+         getcirclepos(mx, my, r, a, x1, y1);
+         getcirclepos(mx, my, my * .95, a, x2, y2);
+         line(x1, y1, x2, y2, -1);
+         circle(mx, my, r, -1);
+         putplanet(x2 - 12, y2 - 12, i);
+         }
+      }
+   i = 0;
+   int y = 0;
+   while (y < my)
+      {
+      int x = width - 8;
+      if (i % 5 = 0)
+         x = width - 15;
+      line(x, my + y, width, my + y, -1);
+      line(x, my - y, width, my - y, -1);
+      y += 6 * zoom;
+      i += 1;
+      }
+   visible(TRUE);
+   return;
+
+:help;
+   help("Help Radius", "
+This is just a fun program that shows the radii for the planets as seen from earth. These are displayed in astronomical units which is roughly the distance from sun to earth.");
+   return;
+
+:helpnl;
+help("NL Help Radius", "Dit is gewoon een programma voor de lol dat de radii voor de planeten laat zien vanaf de aarde. Deze worden weergegeven in astronomische eenheden die ongeveer de afstand van zon tot aarde is.");
+return;
+:Status;
+   char str[200];
+   lan("Zoom", s);
+   strset(str, "%s %s: %d", name, s, zoom);
+   setcaption(str);
+   strset(str, "%6.1f", zoom);
+   labelset(0, str);
+   return;
+
+:ZoomIn;
+   if (hasradix = FALSE)
+      return;
+   zoom -= .1;
+   if (zoom < 1)
+      {
+      zoom = 1;
+      return;
+      }
+   @Status;
+   @DisplayChart;
+   return;
+
+:ZoomOut;
+   if (hasradix = FALSE)
+      return;
+   zoom += .1;
+   if (zoom > 65536)
+      {
+      zoom = 65536;
+      return;
+      }
+   @Status;
+   @DisplayChart;
+   return;
+
+:Updown;
+   if (updownbutton = 1)
+      @ZoomOut;
+   else
+      @ZoomIn;
+   return;

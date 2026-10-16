@@ -1,0 +1,74 @@
+window(500, 500);
+char name[66], s[666], lonstr[11], latstr[11];
+real jd, jdx, lon, lat, lonx, latx, jds[99], lons[99], lats[99];
+int i, n, time[6];
+menu(0, "Close", close);
+menu(0, "Add", add);
+menu(0, "Delete", del);
+menu(0, "Go", go);
+menu(0, "Help", NULL);
+menu(5, "English", help);
+menu(5, "Nederlands", helpnl);
+list(0, 0, width, height, NULL);
+run;
+
+:add;
+  if (gethoroscope("", n, ANYTYPE) = 1)
+    {
+    getname(n, name);
+    gethoroscopetime(n, time, jd);
+    getlonlat(n, lon, lat);
+    listadd(name);
+    n = command(LIST, 10, 0, 0) - 1;
+    jds[n] = jd;
+    lons[n] = lon;
+    lats[n] = lat;
+    }
+  return;
+  
+:del;
+  i = command(LIST, 8, 0, 0); ` current line
+  n = command(LIST, 10, 0, 0) - 1; ` total lines - 1
+  for (i < n)
+    {
+    jds[i] = jds[i + 1];
+    lons[i] = lons[i + 1];
+    lats[i] = lats[i + 1];
+    }
+  command(LIST, 9, -1, 0); ` delete current line
+  return;
+
+:go;
+  n = command(LIST, 10, 0, 0);
+  i = 0; for (i < n)
+    {
+    jdx += jds[i];
+    lonx += lons[i];
+    latx += lats[i];
+    }
+  jdx /= n;
+  lonx /= n;
+  latx /= n;
+  calculate(0, jdx, lonx, latx, -1);
+  setname(0, "Multi Combine");
+  strlonlat(lonstr, latstr, lonx, latx, 1);
+  strset(s, "Multi Combine %s %s", lonstr, latstr);
+  sethoroscopeplace(0, s);
+  sethoroscopetime(0, jdx, 0);
+  setlonlat(0, lonx, latx);
+  horoscopewindow(0, BASIC, 0);
+  quit;
+  return;
+  
+:hor;
+  n = menunumber - 1;
+  return;
+
+:close;
+  quit;
+:help;
+  help("Help Multi Combine", "Choose upto 99 horoscopes, then press Go.");
+  return;
+:helpnl;
+  help("NL Help Multi Combineer", "Selecteer tot 99 horoscopen en klik Start.");
+  return;

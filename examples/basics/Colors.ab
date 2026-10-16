@@ -1,0 +1,16 @@
+window(250, 430);
+menu(0, "Close", close);
+int i = 0, colors[16] = { BLACK, MAROON, GREEN, OLIVE, NAVY, PURPLE, TEAL, GRAY, SILVER, RED, LIME, YELLOW, BLUE, FUCHSIA, AQUA, WHITE };
+char colornames[16][20] = "BLACK", "MAROON", "GREEN", "OLIVE", "NAVY", "PURPLE", "TEAL", "GRAY", "SILVER", "RED", "LIME", "YELLOW", "BLUE", "FUCHSIA", "AQUA", "WHITE";
+visible(0);
+for (i < 16)
+  {
+  putstring(10, 20 + i * 20, colornames[i]);
+  fill(110, 20 + i * 20, 80, 20, colors[i]);
+  } 
+visible(1);
+setcaption("ready");
+run;
+
+:close;
+  quit;

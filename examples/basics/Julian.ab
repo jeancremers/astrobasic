@@ -1,0 +1,26 @@
+window(200, 120);
+menu(0, "Close", close);
+real jd;
+int time[6];
+char jds[12], times[22] = "1 1 1946", ts[22];
+edit(10, 10, 150, times, go1);
+edit(10, 40, 150, jds, go2);
+@go2;
+run;
+
+:go1;
+  timefromstring(times, time[0], time[1], time[2], 0);
+  jd = timetojulian(time);
+  strnum(jds, jd, 1);
+  editset(1);
+  return;
+
+:go2;
+  jd = 1;`numstr(jds);
+  juliantotime(jd, time);
+  timetostring(time, times, ts, 0);
+  editset(0);
+  return;
+
+:close;
+  quit;

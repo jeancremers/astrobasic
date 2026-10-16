@@ -1,0 +1,367 @@
+define TEN 10;
+define MAXPERIOD 9999;
+char place[333] = "Null Island, -Anywhere-, 0e0, 0n0, None", do[TEN], fastest, textonly, inifile[256]= "default.datefindx", inplanet[TEN], explanet[TEN], startstr[33] = "1 1 1900", endstr[33] = "1 1 1910", s[99], t[99], planet[TEN], lowerstr[TEN][9], upperstr[TEN][9], df[256], ds1[44], ts1[44], ds2[44], ts2[44], autostart;
+int intro, total, time[6], planetsign1[TEN], planetsign2[TEN], i, x, y, n, k, m, p, aya, v, order[TEN] = {9, 8, 7, 6, 5, 4, 3, 2, 0, 1}, reverse[TEN] = {8, 9, 7, 6, 5, 4, 3, 2, 1, 0};
+real jd, r1, r2, starttime, endtime, lon, lat, zone, lower[TEN], upper[TEN];
+real jd1, jd2; char p1;` structure for findranges
+window(1500, 900);
+setsymbolsize(1);
+menu(0, "Close", close);
+menu(0, "Go", go);
+menu(0, "Calculate", NULL);
+menu(3, "Begin", calc);
+menu(3, "Middle", calc);
+menu(3, "End", calc);
+menu(0, "Ayanamsha", aya);
+menu(0, "Load", Load);
+menu(0, "Save", Save);
+menu(0, "Reset all", reset);
+menu(0, "Place", place);
+menu(0, "Help", NULL);
+menu(9, "English", help);
+menu(9, "Nederlands", helpnl);
+strset(df, "%sdatefind.name", home);
+getdisk(inifile, df);
+@load;
+getlonlat(&place, lon, lat);
+x = 140;
+label(x, 90, "+       -");
+label(x + 180, 90, "Lower");
+label(x + 380, 90, "Upper");
+command(WINDOW, VISIBLE, 0, 0);
+i = 0; for (i <= PLUTO)
+  {
+  y = 110 + i * 30;
+  checkbox(x, y, " ", inplanet[i], NULL);
+  checkbox(x + 30, y, planetname[i], explanet[i], NULL);
+  n = combobox(x + 140, y, 120, signname, planetsign1[i], NULL);
+  command(COMBO, n, 7, 12);
+  edit(x + 260, y, 30, lowerstr[i], NULL);
+  updown(x + 293, y, i * 2, upd);
+  n = combobox(x +335, y, 120, signname, planetsign2[i], NULL);
+  command(COMBO, n, 7, 12);
+  edit(x + 455, y, 30, upperstr[i], NULL);
+  n = updown(x + 508 - 20, y, i * 2 + 1, upd);
+  }
+i = 0; for (i <= n)
+  {
+  command(UPDOWN, i, WIDTH, 30);
+  command(UPDOWN, i, HEIGHT, 30);
+  }
+command(WINDOW, VISIBLE, 1, 0);
+onclose(save);
+label(x + 20, 20, "Start"); edit(x + 70, 20, 120, startstr, NULL);
+label(x + 200, 20, "End");   edit(x + 270, 20, 120, endstr, NULL);
+checkbox(900, 20, "Text only", textonly, NULL);
+checkbox(900, 50, "Auto start", autostart, NULL);
+label(700, 80, inifile);
+label(700, 120, place);
+text(width - 500, 0, 500, height - 5, 0, 0, NULL);
+textshow(0);
+sethoroscopeplace(0, place);
+@status;
+@putplace;
+if (autostart = 1)
+  @go;
+run;
+
+:reset;
+  set(planetsign1, 0);
+  set(planetsign2, 0);
+  i = 0; for (i <= PLUTO * 2)
+    command(COMBO, i, 11, 0); ` set to vars
+  i = 0; for (i <= PLUTO)
+    {
+    strcpy(lowerstr[i], "0");
+    strcpy(upperstr[i], "0");
+    }
+  strcpy(startstr, "1 1 1900");
+  strcpy(endstr, "1 1 1910");
+  editset(-1);
+  set(inplanet, 0);
+  set(explanet, 0);
+  command(CHECKBOX, 0, 7, -1);
+  return;
+
+#graph(int x, int y, int w, int h)
+{
+visible(0);
+fill(x, y, w, h, -2);
+box(x, y, w, h, -1, 1);
+real len = endtime - starttime, jd;
+if (len = 0) len = 0.000001;
+i = 0; for (i < 6)
+  {
+  jd = starttime + i * len / 6;
+  juliantotime(jd, time);
+  timetostring(time, ds1, ts1, 1);
+  putstring(x + i * w / 6, y, ds1);
+  line(x + i * w / 6, y, x + i * w / 6, y + h, -1);
+  }
+jd = endtime;
+juliantotime(jd, time);
+timetostring(time, ds1, ts1, 1);
+putstring(w - 50, y - 20, ds1);
+i = 0; for (i <= PLUTO)
+  putplanet(x - 30, 20 + y + i * 40, order[i]);
+int barx, barw, i = 0; for (i < total)
+  {
+  memval(0, i, &jd1);
+  barx = x + ((jd1 - starttime) / (endtime - starttime)) * w;
+  barw = ((jd2 - jd1) / len) * w;
+  if (barw = 0)
+    barw = 1;
+  if (barw > w)
+     barw = w;                                                                      ` barx = 0 here, happens cause previous planet has it's period just a little later
+  fill(barx, 20 + y + reverse[p1] * 40, barw, 30, planetcolor[p1]);
+  }
+visible(1);
+}
+
+:putplace;
+  strcpy(s, place);
+  strcmd(5, ',', s);
+  labelset(6, s);
+  return;
+
+:place;
+  if (getplace(place, lon, lat, 1) = 1)
+    {
+    @putplace;
+    @go;
+    }
+  return;
+
+:go;
+  command(FUNCTION, 49, textonly, 0);
+  textclear(0);
+  timefromstring(startstr, time[0], time[1], time[2], 0);
+  jd1 = timetojulian(time);
+  starttime = jd1;
+  timefromstring(endstr, time[0], time[1], time[2], 0);
+  jd2 = timetojulian(time);
+  endtime = jd2;
+  if (endtime <= starttime)
+    {
+    textadd(0, "endtime must be greater than starttime");
+    return;
+    }
+  setfilename(inifile, "", s, 3); ` set inifile name in status
+  strset(s, "%s - Start %s End %s", s, startstr, endstr);
+  textadd(0, s);
+  set(do, 0);
+  intro = 0;
+  i = 0; for (i <= PLUTO)
+    {
+    if (inplanet[i] = 1 && explanet[i] = 1)
+      {
+      strset(s, "%p Error both include and exclude", i);
+      textadd(0, s);
+      return;
+      }
+    if (inplanet[i] = 0 && explanet[i] = 0)
+      continue;
+    lower[i] = (numstr(lowerstr[i]) + 30 * planetsign1[i]) % 360;
+    upper[i] = (numstr(upperstr[i]) + 30 * planetsign2[i]) % 360;
+    if (upper[i] = 0)
+      upper[i] = 360;
+    if (lower[i] > upper[i])
+      {
+      strset(s, "Lower must be less than upper for %p", i);
+      textadd(0, s);
+      return;
+      }
+    if (explanet[i] = 1)
+      {
+      n = lower[i];
+      lower[i] = upper[i];
+      upper[i] = (n + 360) % 360;
+      }
+    strset(s, "%p %0a %i - %0a %i", i, lower[i], lower[i] / 30, upper[i], ((upper[i]) / 30) % 12);  ` upper[i] can be 360, prevent overflow
+    textadd(0, s);
+    do[i] = 1;
+    intro += 1;
+    }
+  memget(0, MAXPERIOD, 17);                                 ` block to store all overlaps
+  total = findranges(do, starttime, endtime, lower, upper, aya, 0); ` do the magic
+
+  command(TEXT, VISIBLE, 0, 0);
+  k = command(TEXT, 11, 0, 0);
+  fastest = -1;
+  i = 9; while (i >= 0)
+    {
+    if (do[order[i]] = 1)
+      {
+      fastest = order[i];
+      break;
+      }
+    i -= 1;
+    }
+  i = 0; k = 0; m = 0; for (i < total)
+    {
+    memval(0, i, &jd1);
+    zone = gettimezone(place, jd1);
+    juliantotime(jd1 + zone, time);
+    timetostring(time, ds1, ts1, 1);
+    r1 = getplanetx(jd1, p1, 0);
+    v = round(r1);
+    if (abs(r1 - v) < 0.01)
+      r1 = v;                    ` rounding errors only seem to happen for jd1
+    zone = gettimezone(place, jd2);
+    juliantotime(jd2 + zone, time);
+    timetostring(time, ds2, ts2, 1);
+    r2 = getplanetx(jd2, p1, 0);
+    strset(s, "%p %s %s %a %i <> %s %s  %a %i", p1, ds1, ts1, r1, r1 / 30, ds2, ts2, r2, r2 / 30);
+    textadd(0, s);
+    if (fastest = p1)
+      k += 1;
+    m += 1;
+    }
+  strset(s, "Total %d periods. %d Final overlapping periods from %s.", total, k, planetname[fastest]);
+  setcaption(s);
+  textshow(0);
+  @graph(35, 430, 950, 430);
+  return;
+
+:calc;
+  n = command(TEXT, 11, 0, 0);
+  if (n <= intro)
+    {
+    say("Info", "Click on a period in the list, then on Calculate");
+    return;
+    }
+  memval(0, n - intro - 1, &jd1);
+  switch (menunumber)
+    {
+    :3; jd = jd1; break;
+    :4; jd = (jd1 + jd2) / 2; break;
+    :5; jd = jd2; break;
+    }
+  calculatesid(0, jd, lon, lat, -1, aya);
+  zone = gettimezone(place, jd);
+  sethoroscopetime(0, jd, zone);
+  sethoroscopeplace(0, place);
+  setname(0, "DateFind");
+  horoscopewindow(0, TRANSIT, 0);
+  return;
+
+:aya;
+  i = 0; for (i < 48)
+    {
+    ayaname(i, s);
+    selectadd(s);
+    }
+  command(SELECT, 0, aya, 0);  
+  i = select("Ayanamsha");
+  if (i > -1)
+   {
+   aya = i;
+   @status;
+   }
+  return;
+
+:status;
+  setfilename(inifile, "", s, 3);
+  ayaname(aya, t);
+  strset(s, "%s%nAyanamsha: %s", s, t);
+  labelset(5, s);
+  return;
+
+:help;
+  help("Help DateFind", "This program finds dates for the specified period and the selected planet positions. Dates/times are given in UT unless you change place.
+Select a planet in the - column to exclude periods with the planet in that range, and a planet in the + column to include it.  
+If start and end of a range are equal, it assumes the whole zodiac, same as exclude.
+The fastest planet you select (often the moon) will provide the final overlapping periods. If this planet has no periods, there are no overlapping periods.
+If you click on a period, then on Calc, you can choose to make a horoscope for the beginning, middle or end of that period.
+You can use Load/Save for different settings.
+");
+  return;
+  
+:helpnl;
+help("NL DateFind", "Dit programma vindt datums voor de opgegeven periode en de geselecteerde planeetposities. Datums / tijden worden gegeven in UT tenzijn de plaats wordt gezet.
+Selecteer een planeet in de kolom - om perioden met de planeet in dat bereik uit te sluiten, en een planeet in de + kolom om deze op te nemen.
+De snelste planeet die je selecteert (vaak de maan) zorgt voor de laatste overlappende perioden. Als deze planeet geen perioden heeft, zijn er geen overlappende perioden.
+Als je op een period klikt, en daarna op Calc wordt een horoscoop gemaakt voor het begin, midden of einde van die periode.
+U kunt Load / Save gebruiken voor verschillende instellingen.");
+return;
+
+:upd;
+  n = updownnumber / 2;
+  if (updownnumber % 2 = 1)
+    {
+    m = numstr(upperstr[n]) + updownbutton;
+    if (m = -1 or m = 31) return;
+    strnum(upperstr[n], m, 0);
+    }
+  else
+    {
+    m = numstr(lowerstr[n]) + updownbutton;
+    if (m = -1 or m = 31) return;
+    strnum(lowerstr[n], m, 0);
+    }
+  editset(-1);
+  return;  
+
+:close;
+  quit;
+
+:Load;
+  if (getfilename("DateFind setting", "(*.datefind)|*.datefindx", inifile, 1, FILEREADAB, 1) = 1)
+    {
+    putdisk(inifile, df);
+    @load;
+    i = 0; for (i <= PLUTO)
+      {
+      command(COMBO, i * 2, 6, planetsign1[i]);
+      command(COMBO, i * 2 + 1, 6, planetsign2[i]);
+      }
+    command(CHECKBOX, 0, 7, -1);
+    editset(-1);
+    @status;
+    if (autostart = 1)
+      @go;
+    }
+  return;
+  
+:Save;
+  if (getfilename("DateFind setting", "(*.datefind)|*.datefindx", inifile, 0, FILEWRITEAB, 1) = 1)
+    {
+    putdisk(inifile, df);
+    @save;
+    @status;
+    }
+  return;
+
+:load;
+  fileopen(inifile, FILEREADAB);
+  fileread(inplanet);
+  fileread(planetsign1);
+  fileread(planetsign2);
+  fileread(upperstr);
+  fileread(lowerstr);
+  fileread(startstr);
+  fileread(endstr);
+  fileread(explanet);
+  fileread(aya);
+  fileread(textonly);
+  fileread(autostart);
+  fileread(place);
+  fileclose;
+  return;
+  
+:save;
+  fileopen(inifile, FILEWRITEAB);
+  filewrite(inplanet);
+  filewrite(planetsign1);
+  filewrite(planetsign2);
+  filewrite(upperstr);
+  filewrite(lowerstr);
+  filewrite(startstr);
+  filewrite(endstr);
+  filewrite(explanet);
+  filewrite(aya);
+  filewrite(textonly);
+  filewrite(autostart);
+  filewrite(place);
+  fileclose;
+  return;

@@ -1,0 +1,191 @@
+$
+01 retro
+2 conj cusp
+3 out of orb
+4 in orb
+5 exact
+6 decl in orb
+7 decl exact
+8 decl out orb
+9 oob
+10 inb
+11 dec zero
+12 dec max
+$
+copyhoroscope(-1, 1);
+onclose(save);
+int n = numstr(cmdline), time[6], aya, i, count, housesys = gethousesys(1), age;
+`n=PLUTO;
+real zone, jd = getsystemtime(time), lon, lat, birth, planet[PLANETS];
+gethoroscopetime(1, time, birth);
+age = ((jd - birth)/ YEAR) + 0.5;
+time[3] = 0;
+time[4] = 0;
+time[5] = 0;
+zone = gettimezone(defaultplace, jd);
+jd -= zone;
+char t[99], name[99], str[22], p1[13], p2[16], as[ASPECTS], s[99], opt[12], pre, reloc, place[99], birthplace[99], inifile[256] = "return.ini", ayanamsha[48][33], doclose;
+i = 0; for (i < 48)
+  ayaname(i, ayanamsha[i]);
+@load;
+strcpy(place, defaultplace);
+getname(1, name);
+gethoroscopeplace(1, birthplace, 0);
+if (n = SUN)
+  strset(s, "%l %s", "Solar", name);
+if (n = MOON)
+  strset(s, "%l %s", "Lunar", name);
+if (s[0] = 0)
+  strset(s, "%l %s %s", "Return", planetname[n], name);
+window(350, 330);
+setcaption(s);
+setname(0, s);
+checkbox(22, 5, "Close after calculate", doclose, NULL);
+if (n = SUN)
+  {
+  strnum(str, age, 0);
+  label(22, 45, "Age");
+  label(250, 45, "");
+  @setdate;
+  }
+else
+  {
+  getsystemtime(time);
+  timetostring(time, str, s, 0);
+  label(22, 45, "Search from");
+  }  
+edit(120, 42, 120, str, setdate);
+checkbox(22, 85, "Precession Correction", pre, presclick);
+combobox(22, 110, 200, ayanamsha, aya, NULL);
+command(COMBO, 0, 10, 0);
+command(COMBO, 0, 1, 0);
+command(COMBO, 0, 6, 0);
+radiogroup(22, 160, 200, 75, 1, reloc, "Location", "Natal|Relocation", reloc);
+button(250, 190, "Place", place);
+menu(0, "Close", close);
+menu(0, "Housesystem", sethouse);
+menu(0, "Start", go);
+int placelabel = label(22, 250, place);
+label(100, 280, housesystem[housesys]);
+@reloc;
+run;
+
+:setdate;
+  if (n != SUN) return;
+  real birthday = birth + numstr(str) * YEAR;          ` display date of solar return
+  juliantotime(birthday, time);
+  timetostring(time, t, s, 0);
+  labelset(1, t);
+  return;
+
+:reloc;
+  command(BUTTON, 0, 1, reloc);
+  if (reloc = 0)
+    strcpy(s, birthplace);
+  else    
+    strcpy(s, place);
+  strcmd(5, ',', s);
+  labelset(placelabel, s);
+  return;
+
+:place;
+  if (getplace(place, lon, lat, 1) = 1)
+    @reloc;
+  return;
+
+:presclick;
+  command(COMBO, 0, 1, pre);
+  return;
+
+:close;
+  quit;
+
+:sethouse;
+  i = 0; for (i < 24)
+    {
+    if (i = 16) continue;
+    selectadd(housesystem[i]);
+    }
+  command(SELECT, 0, housesys, 0);
+  housesys = select("Houses");
+  housesys += if (housesys > 15);
+  labelset(placelabel + 1, housesystem[housesys]);
+  return;
+
+:go;
+if (n = SUN)
+  {
+  age = numstr(str);
+  jd = birth + age * YEAR - 5;
+  }
+else
+  {
+  set(time, 0);
+  timefromstring(str, time[0], time[1], time[2], 0);
+  jd = timetojulian(time);  
+  }
+if (pre = 1)
+  {
+  getplanets(1, planet);
+  gethoroscopetime(1, time, birth);
+  planet[n] = calcplanetsid(birth, n, aya);         ` calculate the planet for sidereal
+  setplanets(1, planet);
+  }
+else 
+  aya = -1;
+if (reloc = 0)
+  {
+  sethoroscopeplace(0, birthplace);             ` use natal data
+  getlonlat(1, lon, lat);
+  strcpy(place, birthplace);                    ` set place for gettimezone
+  }
+else
+  {    
+  sethoroscopeplace(0, place);
+  getlonlat(0, lon, lat);
+  }
+p1[n] = 1;
+p2[n] = 1;
+as[CONJUNCTION] = 1;
+real findjd;
+char findtype, findp1, findp2, findasp; 
+real findr1, findr2, findorb = 1; 
+memget(0, 5, 36);
+opt[5] = 1; ` horno
+opt[7] = 1; ` orb
+opt[8] = aya + 1; ` sid
+opt[2] = 2; ` signal exit after exact aspect
+count = findaspectx(jd, jd + 300 * YEAR, p1, p2, as, opt, lon, lat);
+if (count > 0)
+  memval(0, count - 1, &findjd);
+`juliantotime(findjd, time);
+
+calculate(0, findjd, lon, lat, housesys);
+zone = gettimezone(place, findjd);
+sethoroscopetime(0, findjd, zone);
+int type = TRANSIT);                ` default to transit, above saturn have no type
+if (n <= SATURN)
+  type = RETSOL + n;
+horoscopewindow(0, type, false);
+if (doclose = 1)
+  quit;
+return;
+
+:load;
+  fileopen(inifile, FILEREADAB);
+  fileread(reloc);
+  fileread(doclose);
+  fileclose;
+  return;
+
+:save;
+  fileopen(inifile, FILEWRITEAB);
+  filewrite(reloc);
+  filewrite(doclose);
+  fileclose;
+  return;
+
+
+$
+
+$

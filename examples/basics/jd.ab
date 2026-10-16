@@ -1,0 +1,26 @@
+window(99,99);
+char s[99] = "2457300.5", t[99], r[3][5];
+int time[6];
+real jd;
+edit(9, 9, 100, s, eds);
+edit(9, 44, 100, t, edt);
+@eds;
+run;
+
+
+:eds;
+jd = numstr(s);
+juliantotime(jd, time);
+strset(t, "%d-%d-%d", time[2], time[1], time[0]);
+editset(1);
+return;
+
+:edt;
+split(t, r, '-');
+time[2] = numstr(r[0]);
+time[1] = numstr(r[1]);
+time[0] = numstr(r[2]);
+jd = timetojulian(time);
+strset(s, "%f", jd);
+editset(0);
+return;

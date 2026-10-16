@@ -1,0 +1,120 @@
+char filename[256], name[61], caption[200], s[256], big = if (screenheight > 880);
+setsymbolsize(big);
+int rec = -1, records, parm;
+window(0, 0);
+button(width - 280, height - 70, "&Menu", NULL);
+command(BUTTON, 0, 10, 0);
+button(width - 280, height - 95, "Load", Load);
+button(width - 280, height - 120, "Close", Close);
+
+menu(0, "Database", Database);
+menu(0, "Help", NULL);
+menu(2, "English", help);
+menu(2, "Nederlands", helpnl);
+updown(width - 280, height - 40, 0, Updown);
+command(UPDOWN, 0, 6, 1);
+command(UPDOWN, 0, 4, 80);
+command(UPDOWN, 0, 5, 40);
+`strcpy(filename, defaultdatabase);
+strcmd(17, 0, filename);
+list(width - 200, 0, 200, height, listchange);
+`command(LIST, 12, &filename, 0);
+listdblclick(Load);
+@open;
+run;
+
+:listchange;
+  rec = listindex - 1;
+  @Next;
+  return;
+
+:Close;
+   quit;
+   
+:Load;
+   int type = gettype(0);
+   horoscopewindow(0, type, 1);
+   return;
+   
+:Updown;
+   if (updownbutton = 1)
+      @Next;
+   else
+      @Prev;
+   return;
+
+:Next;
+   if (rec = records - 1)
+     rec = -1; 
+   rec += 1;
+   @Disp;
+   return;
+
+:Prev;
+   if (rec = 0)
+     rec = records;
+   rec -= 1;
+   @Disp;
+   return;
+   
+:Disp;
+   if (rec < 0)
+      return;
+   readrecord(0, rec);
+   command(LIST, 6, rec, 0);
+   drawhoroscope(0, parm, 5, 5, width - 205, height - 5, width * .45);
+   getname(0, name);
+   setfilename(filename, "", s, 2);
+   strset(caption, "%s %s %d records", s, name, records);
+   setcaption(caption);
+   return;
+
+:open;
+   readclose;   ` Close previous.
+   records = filesize(filename) / 1060;
+   if (records > 1000)
+     {
+     say(filename, "File too big, use File Open for this");
+     return;
+     }
+   records = readopen(filename, true);
+   listclear;
+   cursor(1);
+   rec = 0;
+   for (rec < records)
+     {
+     readrecord(0, rec);
+     getname(0, name);
+     listadd(name);
+     }
+   rec = -1;
+   cursor(0);
+   @Next;
+  return;
+
+:Database;
+   if (TRUE = getdbfilename("", filename, 1))
+      @open;
+   return;
+
+:help;
+   help("Help Browser", "
+This program lets you walk through a database with horoscopes.
+
+Choose a database and use arrows to navigate through it.
+
+A double click will load the current horoscope into planetdance.
+
+The 'Database' menu will let you choose another database.
+");
+   return;
+   
+:helpnl;
+help("NL Help Blader", "Met dit programma kun je door een database met horoscopen bladeren.
+
+Kies een database en gebruik pijlen om er doorheen te navigeren.
+
+Dubbel klik laadt de huidige horoscoop in de planetdance.
+
+In het menu 'Database' kunt u een andere database kiezen.");
+return;

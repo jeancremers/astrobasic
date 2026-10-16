@@ -1,0 +1,198 @@
+`history-------------------------------------------------------------------------------------------
+
+  ` 17 April 2026
+  
+  ` v.1.03 - release file
+  
+`--------------------------------------------------------------------------------------------------
+
+window(800, 300);
+
+menu(0, "Close", close);
+menu(0, "Help", NULL);
+menu(2, "English", help);
+menu(2, "Dutch", helpnl);
+
+real r, r1, r2, planet[PLANETS], house[HOUSES], velocities[14], jd, lon, lat, bZone, ASMC[2];
+int time[6], showTime[6], i;
+char n, sid, calcClose, inifile[256] = "reloc101.ini", s[99], newPlace[99], bPlace[99], name[99], dStr[11], tStr[9], placeBits[8][28];
+
+@load;
+onclose(save);
+
+copyhoroscope(-1, 0);
+
+getname(0, name);
+strset(s, "%s %s", "Relocate Chart: ", name);
+setcaption(s);
+
+` jd is ut
+bZone = gethoroscopetime(0, time, jd);
+
+getlonlat(0, lon, lat);
+getplanets(0, planet);
+gethouses(0, house);
+getvelocities(0, velocities);
+
+n = gethousesys(0);
+
+` identify number of ayanamsa
+sid = command(FUNCTION, 3, 0, 0);
+
+gethoroscopeplace(0, bPlace, 1);
+split(bPlace, placeBits, ',');
+
+move(bPlace, newPlace, 99 * CHAR);
+
+label(500, 30, "Select new location");
+button(500, 60, "&New Place", changePlace);
+hint("Click button to change location of chart");
+command(BUTTON, buttonnumber, WIDTH, 100);
+
+label(500, 120, "Show relocated chart");
+button(500, 150, "C&alculate", calcReloc);
+hint("Click button to show relocated chart");
+command(BUTTON, buttonnumber, WIDTH, 100);
+
+` checkbox(500, 200, "Close on calculate", calcClose, NULL);
+
+@go;
+
+run;
+
+:go;
+
+  visible(0);
+
+  fill(0, 0, width, height, -2);
+  
+  ` birthplace details
+  strset(s, "%s", name);
+  putstring(10, 30, s);
+
+  timetostring(time, dStr, tStr, 0);
+  strset(s, "%s, %s", dStr, tStr);
+  putstring(10, 60, s);
+
+   ` place
+  strset(s, "%s, %s", placeBits[0], placeBits[1]);
+  putstring(10, 90, s);
+
+  ` lat and lon
+  strset(s, "%s, %s", placeBits[3], placeBits[2]);
+  putstring(10, 120, s);
+
+  strset(s, "%s %.2f %s", "Zone: ", bZone * 24, "Hours");
+  putstring(10, 150, s);
+  
+  strset(s, "%p %i %a", ASCENDANT, planet[ASCENDANT] / 30, planet[ASCENDANT]);
+  putsymbolstring(10, 180, s);
+
+  strset(s, "%p %i %a", MC, planet[MC] / 30, planet[MC]);
+  putsymbolstring(10, 210, s);
+  
+  visible(1);
+  
+  return;
+  
+:changePlace;
+
+  ` execute dialog - to work must have place to execute - e.g. birthplace
+  getplace(newPlace, r, r1, 1);
+
+  sethoroscopeplace(1, newPlace);
+  
+  split(newPlace, placeBits, ',');
+  
+  ` new zone
+  r2 = gettimezone(newPlace, jd);
+  
+  sethoroscopetime(1, jd, r2);
+  
+  juliantotime(jd + r2, showTime);
+  
+  ` n = housesys
+  calculate(1, jd, r, r1, n);
+
+  getplanets(1, planet);
+  gethouses(1, house);
+  getvelocities(1, velocities);
+
+  @relocText;
+  
+  return;
+  
+:relocText;
+
+  fill(180, 0, 250, 500, -2);
+  
+  ` relocation details
+  strset(s, "%s %s", name, "(Relocated Chart)");
+  putstring(200, 30, s);
+
+  timetostring(showTime, dStr, tStr, 0);
+  strset(s, "%s, %s", dStr, tStr);
+  putstring(200, 60, s);
+
+   ` place
+  strset(s, "%s, %s", placeBits[0], placeBits[1]);
+  putstring(200, 90, s);
+
+  ` lat and lon
+  strset(s, "%s, %s", placeBits[3], placeBits[2]);
+  putstring(200, 120, s);
+
+  strset(s, "%s %.2f %s", "Zone: ", r2 * 24, "Hours");
+  putstring(200, 150, s);
+  
+  strset(s, "%p %i %a", ASCENDANT, planet[ASCENDANT] / 30, planet[ASCENDANT]);
+  putsymbolstring(200, 180, s);
+  
+  strset(s, "%p %i %a", MC, planet[MC] / 30, planet[MC]);
+  putsymbolstring(200, 210, s);
+  
+  return;
+  
+:calcReloc;
+
+  setplanets(1, planet);
+  sethouses(1, house);
+  setvelocities(1, velocities);
+  
+  strset(s, "%s (%s) %s", name, placeBits[0], "(Relocated)");
+  setname(1, s);
+  
+  horoscopewindow(1, RADIX, 0);
+
+  return;
+
+:close;
+  quit;
+
+:help;
+  help("Help - Relocated Chart",
+
+"This simple module relocates the chosen natal chart. On the left of the pop up window, the natal chart details are shown, including the ascendant and MC angles at birth.
+
+To choose a new location for the individual, click the New Place button. The Planetdance place dialogue box will show. Select the new location and click OK. The details of the new place will be displayed, along with the relocated angles for the chart.
+
+To calculate the relocated chart, click the Calculate button. The new chart will be displayed in the main Planetdance window.
+
+Further relocations can be calculated by repeating the steps above. When the user has finished with the module, just close the Relocate Chart window.");
+  return;
+  
+:helpnl;
+  help("NL Help", "");
+  return;
+
+:load;
+  fileopen(inifile, FILEREADAB);
+  fileread(calcClose);
+  fileclose;
+  return;
+
+:save;
+  fileopen(inifile, FILEWRITEAB);
+  filewrite(calcClose);
+  fileclose;
+  return;

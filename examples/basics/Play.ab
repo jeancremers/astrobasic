@@ -1,0 +1,53 @@
+window(400, 250);
+menu(0, "Close", close);
+int i, n = 1;
+real v;
+onclose(save);
+@load;
+char val[5][5], s[99];
+for (i < 5)
+  {
+  edit(60, 10 + i * 30, 44, val[i], go);
+  strnum(s, 5 - i, 0);
+  label(10, 10 + i * 30, s);
+  updown(120, 10 + i * 30, updo);
+  }
+label(10, 180, "");
+@go;  
+run;
+
+:close;
+  quit;
+  
+:updo;
+  v = numstr(val[updownnumber]) + updownbutton;
+  strnum(val[updownnumber], v, 0);
+  editset(updownnumber);
+  @go;
+  return;
+
+:go;
+ real tot = 0;
+ n = 0;
+ i = 0; for (i < 5)
+   {
+   v = numstr(val[i]);
+   fill(160, 15 + i * 30, v, 20, BLUE);
+   n += v;
+   tot += v * (5 - i); 
+   }
+ strset(s, "%d - %f", n, tot / n);
+ labelset(5, s);   
+ return;
+
+:save;
+fileopen("play.cfg", FILEWRITEAB);
+filewrite(val);
+fileclose;
+return;
+
+:load;
+fileopen("play.cfg", FILEREADAB);
+fileread(val);
+fileclose;
+return;

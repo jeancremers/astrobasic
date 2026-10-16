@@ -1,0 +1,258 @@
+window(0, 0);
+command(WINDOW, 7, 0, 0); ` remove system menu
+command(WINDOW, 6, 0, 0); ` maximize
+menu(0, "Close", close);
+menu(0, "Go", go);
+menu(0, "Random", tim);
+menu(0, "Load", Load);
+menu(0, "Save", Save);
+menu(0, "Help", NULL);
+menu(6, "English", help);
+menu(6, "Nederlands", helpnl);
+char back = 1, fix, stepstr[9] = "1000", daystr[9] = "3", inifile[256] = "planetdance.pds", startstr[22] = "1/1/1900", color[15], doasp, orbstr[9] = "5", s[99], slide, dolog, logfile[256], ds[22], ts[22], names[10][22] =  "Earth", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Chiron", stylestr[11] = "0";
+int mx = 230 + (width - 230) / 2, my = height / 2, r = my - 20, steps, days, i, time[6] = {1900, 1, 1, 0, 0, 0}, p1 = VENUS, p2 = MARS, x1, x2, y1, y2, n, tot, curcol[15], c, ndx[10] = { 0, 2, 3, 4, 5, 6, 7, 8, 9, 11 },
+  col[15] = { -1, MAROON, GREEN, OLIVE, NAVY, PURPLE, TEAL, GRAY, SILVER, RED, LIME, YELLOW, BLUE, FUCHSIA, AQUA };
+real jd, planet[PLANETS], colors, orb, start = 2378496, end = 2597276;
+strset(logfile, "%sab\planetdancelog.txt", home);
+set(color, 1);
+@load;
+putstring(10, 10, "Days"); edit(100, 10, 110, daystr, NULL);
+putstring(10, 35, "Steps"); edit(100, 35, 110, stepstr, NULL);
+putstring(10, 60, "Start"); edit(100, 60, 110, startstr, NULL);
+combobox(10, 90, 100, names, p1, NULL); combobox(120, 90, 100, names, p2, NULL);
+checkbox(170, 115, "Fix", fix, NULL);
+settype(0, CALCHELI);
+for (i < 15)
+  {
+  y1 = 120 + i * 25;
+  checkbox(10, y1, "", color[i], NULL);
+  fill(40, y1, 20, 20, col[i]);
+  button(65, y1, "..", setcol);
+  command(BUTTON, i, WIDTH, 25);  
+  if (i < ASPECTS)
+    putaspect(100, y1, i);
+  if (i = ASPECTS)
+    putstring(100, y1, "None");  
+  }
+y1 = 120 + i * 25;
+radiogroup(10, y1, 180, 50, 2, doasp, "", "Time|Aspects", go); 
+putstring(10, 550, "Orb");
+edit(100, 550, 40, orbstr, NULL);
+putstring(10, 575, "Linestyle");
+edit(100, 570, 40, stylestr, NULL);
+checkbox(10, 600, "Background", back, go);
+checkbox(10, 620, "Slideshow", slide, settimer);
+checkbox(10, 640, "Log", dolog, NULL);
+onclose(save);
+command(FUNCTION, 68, 0, 0); ` clear pending escape events
+button(width - 100, 35, "&Menu", NULL);
+command(BUTTON, -1, 10, 0);
+command(MENU, -1, 12, 0); ` add output menus
+button(width - 100, 10, "&Close", close);
+button(width - 100, 60, "&Go", go);
+button(width - 100, 85, "&Random", tim);
+@go;
+run;
+
+:settimer;
+  n = 1000 * if (slide = 1);
+  timer(n, tim); 
+  return;
+
+:tim;
+  real t1 = start + random(end - start);
+  juliantotime(t1, time);
+  timetostring(time, startstr, s, 0);
+  days = random(12) + 1;
+  strnum(daystr, days, 0);
+  steps = random(10000) + 1;
+  strnum(stepstr, steps, 0);
+  orb = random(15) + 1;
+  strnum(orbstr, orb, 0);
+  n = 4 - random(9);
+  strnum(stylestr, n, 0);
+  editset(-1);
+  doasp = random(2);
+  command(RADIO, 0, 7, doasp);
+  :again;
+  if (fix = 0)
+    {
+    p1 = random(10);
+    p2 = random(10);
+    if (p1 = p2) goto again;
+    }
+  command(COMBO, 0, 8, 0);
+  i = 0; for (i < 15)
+    {
+    col[i] = random(WHITE);
+    y1 = 120 + i * 25;
+    fill(40, y1, 20, 20, col[i]);
+    n = random(2);
+    command(CHECKBOX, i + 1, SETCHECK, n);
+    }
+`  wait(100);
+  @go;
+  return;
+
+:setcol;
+  i = getcolor(col[buttonnumber]);
+  if (i > -1)
+    {
+    col[buttonnumber] = i;
+    y1 = 130 + buttonnumber * 25;
+    fill(40, y1, 20, 20, col[buttonnumber]);
+    }
+  return;
+  
+:go;
+  if (dolog = 1)
+    {
+    getsystemtime(time);
+    timetostring(time, ds, ts, 1);
+    strset(s, "%s %s Days %s Steps %s Start %s %s %s", ds, ts, daystr, stepstr, startstr, planetname[p1], planetname[p2]);
+    linewrite(logfile, s); 
+    lineclose;
+    }  
+  steps = numstr(stepstr);
+  days = numstr(daystr);
+  orb = numstr(orbstr);
+  n = numstr(stylestr);
+  setlinestyle(n);
+  timefromstring(startstr, time[0], time[1], time[2], 0);
+  jd = timetojulian(time);
+  if (back = 1)
+    {
+    n = random(WHITE);
+    fill(230, 0, width - 200, height, n);
+    }
+  else
+    fill(230, 0, width - 200, height, -2);
+  circle(mx, my, r, -1);
+  i = 0; tot = 0; for (i < 15)
+    {
+    if (color[i] = 1) 
+      {
+      curcol[tot] = col[i];
+      tot += 1;
+      }
+    }
+  if (tot = 0) return;  
+  colors = steps / tot;
+  button(120, 440, "Cancel", cancel);
+  i = 0; for (i < steps)
+    {
+    calculate(0, jd, 0, 0, -2);
+    getplanets(0, planet);
+    jd += days;
+    real r1 = planet[ndx[p1]], r2 = planet[ndx[p2]];
+    getcirclepos(mx, my, r, r1, x1, y1);
+    getcirclepos(mx, my, r, r2, x2, y2);
+    if (doasp = 1)
+      {
+      if (color[ASPECTS] = 1)
+        c = col[ASPECTS];
+      else
+        c = -1;  
+      int j = 0; for (j < ASPECTS)
+        {
+        if (color[j] = 1 && isangle(r1, r2, aspectangle[j], orb) > -1)
+          {
+          c = col[j];
+          break;
+          }
+        }
+      }
+    else      
+      c = curcol[i / colors];
+    if (c > -1)
+      line(x1, y1, x2, y2, c);
+    escape(cancel);
+    escape(close);
+    escape(settimer);
+`    command(FUNCTION, 47, 0, 0); ` check terminated, doesn't work
+    }
+  command(BUTTON, -1, -1, 0);
+  return;
+  
+:cancel;
+  command(BUTTON, -1, 0, 0);  
+  lineclose;  
+  return;  
+
+:close;
+  quit;
+
+:help;
+  help("Help planetdance", "Heliocentric patterns. Choose two planets, a timespan and a stepvalue, then press Go. Experiment with the values to get different shapes. If Log is checked, a log file will be written to c:\planetdance\ab\planetdancelog.txt.
+There are two ways to use colors, Time and Aspect. Time divides the selected colors over the timespan while Aspects colors a line when in it's in orb for the selected aspects. The 'None' color is for which color to use in Aspects mode if a line is no aspect at all.
+Linestyle: sets how a lines are drawn, style = 0 gives a normal line, style > 0 gives a line that is 'style' width, style < 0 gives one of the styles below:
+-1 psDash	A line made up of a series of dashes.
+-2 psDot	A line made up of a series of dots.
+-3 psDashDot	A line made up of alternating dashes and dots.
+-4 psDashDotDot	A line made up of a series of dash-dot-dot combinations.
+checking Fix will fix the planets during randomisation.
+");
+  return;
+
+:helpnl;
+  help("NL Help planetdance", "Heliocentrische patronen. Kies twee planeten, een tijdspanne en een stapwaarde en druk vervolgens op Start. Experimenteer met de waarden om verschillende vormen te krijgen. Als Log is aangevinkt, wordt een logbestand geschreven naar c \planetdance\ab\ planetdancelog.txt.
+Er zijn twee manieren om kleuren te gebruiken, tijd en aspect. De tijd verdeelt de geselecteerde kleuren over de tijdspanne, terwijl aspect een lijn kleurt als dat een aspect in orb is voor de geselecteerde aspecten. De 'Geen'-kleur is voor welke kleur moet worden gebruikt in de Aspects-modus als een lijn helemaal geen aspect is.
+Linestyle: bepaalt hoe lijnen worden getekend, style = 0 geeft een normale lijn, style> 0 geeft een regel met een 'style'-breedte, style <0 geeft een van de onderstaande stijlen:
+-1 psDash Een regel bestaande uit een reeks streepjes.
+-2 psDot Een regel bestaande uit een reeks stippen.
+-3 psDashDot Een regel bestaande uit afwisselende streepjes en punten.
+-4 psDashDotDot Een regel die bestaat uit een reeks streepjes / stip-combinaties.
+
+Fix aanvinken zal de planeten laten staan bij randomisatie.
+
+");
+  return;
+
+:load;
+  fileopen(inifile, FILEREADAB);
+  fileread(daystr);
+  fileread(stepstr);
+  fileread(startstr);
+  fileread(p1);
+  fileread(p2);
+  fileread(color);
+  fileread(col);
+  fileread(doasp);
+  fileread(orbstr);
+  fileread(dolog);
+  fileread(fix);
+  fileread(back);
+  fileclose;
+  return;
+  
+:save;
+  fileopen(inifile, FILEWRITEAB);
+  filewrite(daystr);
+  filewrite(stepstr);
+  filewrite(startstr);
+  filewrite(p1);
+  filewrite(p2);
+  filewrite(color);
+  filewrite(col);
+  filewrite(doasp);
+  filewrite(orbstr);
+  filewrite(dolog);
+  filewrite(fix);
+  filewrite(back);
+  fileclose;
+  return;
+
+:Load;
+  if (getfilename("Open", "(*.pds)|*.pds", inifile, 1, FILEREADAB, 0) = 1)
+    {
+    @load;
+    command(COMBO, 0, 8, 0);
+    editset(-1);
+    @go;
+    }
+  return;
+  
+:Save;
+  if (getfilename("Open", "(*.pds)|*.pds", inifile, 0, FILEWRITEAB, 0) = 1)
+    @save;
+  return;  

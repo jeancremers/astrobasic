@@ -1,0 +1,549 @@
+` history------------------------------------------------------------------------------------------
+
+` 4 November 2019
+
+` v.2.02. Midpoints, based on Jean's version
+
+` Jean added bonati, big
+
+`--------------------------------------------------------------------------------------------------
+window(0, 0);
+button(10, height - 30, "Menu", NULL);
+command(BUTTON, buttonnumber, 10, 0);
+`window(1160, 750);
+menu(0, "Close", Close);
+menu(0, "Synastry", syn);
+menu(0, "Help", NULL);
+menu(3, "English", help);
+menu(3, "Nederlands", helpnl);
+@cls;
+real maxorb = 1.5, planet[PLANETS], syn[PLANETS], mp, orb;
+char big, name[60], str[99], t[99], s1[100], s2[100], ndx = 0, mod, view, xMods[999] = "Planet|360|90|45|22.5",
+     screenView[999] = "Trees|Scope", OrbStr[10] = "1.5", check[27] = { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0,1,0,0,0,0,0 }, pname[PLANETS][4] = "sun", "moo", "mer", "ven", "mar", "jup", "sat", "ura", "nep", "plu", "nod", "chi", "lil", "par", "asc", "mc ", b[2222];
+int x, y, p1, p2, p3, a, i, s = 18, doplanets[PLANETS], doaspects[ASPECTS], top = height - 265, count, mpIndex[300];
+onclose(save);
+@load;
+copyhoroscope(-1, 0);
+getplanets(0, planet);
+getname(0, str);
+getname(0, name); ` store original name separately for synastry
+strset(str, "%l %s", "Midpoints", str);
+setcaption(str);
+move(planet, syn, PLANETS * REAL);
+strset(s1, "%sab\horoscope\midpoints.txt", home);
+findfilestr(0, s1, "");
+top = height - 75;
+y = top;
+x = width - 320;
+visible(FALSE);
+i = 0; for (i < PLANETS)
+  {
+  if (i > 0 and i % 4 = 0)
+     {
+     y = top;
+     x += 40;
+     }
+  checkbox(x, y, "", check[i], Update);
+  command(CHECKBOX, i, WIDTH, 20);
+  putplanet(x + 20, y, i);
+  y += 18;
+  }
+x += 60;
+y = top;
+i = 0; for (i < ASPECTS)
+  {
+  if (i > 0 and i % 4 = 0)
+     {
+     y = top;
+     x += 40;
+     }
+  checkbox(x, y, "", check[i + PLANETS], Update);
+  command(CHECKBOX, i + PLANETS, WIDTH, 20);
+  putaspect(x + 20, y, i);
+  y += 18;
+  }
+y = height - 210;
+label(width - 150, y, "Orb:");
+edit(width - 110, y, 40, OrbStr, OrbChange);
+checkbox(width - 150, y + 33, "Big", big, Update);
+updown(width - 70, y, 0, Updown);
+radiogroup(width - 320, y, 80, 130, 1, ndx, "Modulus", xMods, changeMod);
+radiogroup(width - 240, y, 80, 60, 1, view, "View", screenView, changeView);
+text(width - 200, 0, 200, height *.65, 0, 0, NULL);
+y = height * .7;
+memo(0, y, width - 340, height - y, 0, 1);
+visible(TRUE);
+@Update;
+command(MENU, 0, 12, 0);
+run;
+
+:syn;
+  if (gethoroscope("", 0, ANYTYPE) = TRUE)
+    {
+    getplanets(0, syn);
+    getname(0, str);
+    strset(str, "%l %s - %s", "Midpoints", name, str);
+    setcaption(str);
+    @Trees;
+    @List;
+    }
+  return;
+
+:load;
+  fileopen("midpoint.set", FILEREADAB);
+  fileread(maxorb);
+  fileread(check);
+  fileread(big);
+  fileclose;
+  strnum(OrbStr, maxorb, 1);
+  return;
+  
+:save;
+  fileopen("midpoint.set", FILEWRITEAB);
+  filewrite(maxorb);
+  filewrite(check);
+  filewrite(big);
+  fileclose;
+  return;  
+
+:SetOptions;
+   i = 0;
+   for (i < PLANETS)
+      doplanets[i] = check[i];
+   i = 0;
+   for (i < ASPECTS)
+      doaspects[i] = check[i + PLANETS];
+   return;
+
+:cls;
+   fill(0, 0, width * .72, height *.7, -2);
+   return;
+
+:Close;
+   quit;
+   
+:Status;
+   getname(0, s1);
+   lan("Midpoints", t);
+   strset(s2, "%s %s", t, s1);
+   setcaption(s2);
+   return;
+
+:Update;
+   setsymbolsize(big);
+   @SetOptions;
+   @List;
+   @changeView;
+   return;
+
+:Person;
+   if (gethoroscope("", 0, RADIX) = TRUE)
+      {
+      getplanets(0, planet);
+      @Status;
+      @Trees;
+      }
+   return;
+   
+:OrbChange;
+   maxorb = numstr(OrbStr);
+   if (maxorb < 0.1)
+      {
+      maxorb = 0.1;
+      strnum(OrbStr, maxorb, 1);
+      editset(0);
+      }
+   @Update;   
+   return;
+
+:Updown;
+   maxorb += updownbutton * 0.1;
+   if (maxorb < 0.1)
+      maxorb = 0.1;
+   strnum(OrbStr, maxorb, 1);
+   editset(0);
+   @Update;
+   return;
+
+:changeView;
+   if (view = 0)
+      @Trees;
+   else
+      @midpointScopes;
+   return;
+
+return;
+   
+:changeMod;
+  switch (ndx)
+   {
+    :0; mod = 360; break;
+    :1; mod = 360; break;
+    :2; mod = 90; break;
+    :3; mod = 45; break;
+    :4; mod = 22.5; break;
+    :5; mod = 11.25; break;
+   }
+   @List;
+   return;
+
+  return;
+ 
+:Trees;
+   visible(FALSE);
+   @cls;
+   int midp2[PLANETS][11], midp3[PLANETS][11], midas[PLANETS][11];
+   real midor[PLANETS][11];
+   p1 = SUN;
+   int ypos[PLANETS];
+   set (ypos, 0);
+   for (p1 < PLANETS)
+      {
+      x = (p1 % 8) * width / 11;
+      y =  height *.4 * if (p1 >= 8);
+      putplanet(x + s / 2 + big * 8, y + big * 8, p1);
+      if (doplanets[p1] = TRUE)
+         {
+         p2 = SUN;
+         for (p2 < PLANETS)
+            {
+            if (doplanets[p2] = FALSE)
+              continue;
+            p3 = p2 + 1;
+            for (p3 < PLANETS)
+               {
+               if (doplanets[p3] = FALSE)
+                  continue;
+               mp = midpoint (planet[p2], planet[p3]);
+               a = CONJUNCTION;
+               for (a < ASPECTS)
+                  {
+                  if (doaspects[a] = FALSE)
+                     continue;
+                  orb = isangle(syn[p1], mp, aspectangle[a], maxorb);
+                  if (orb >= 0)
+                     {
+                     if (ypos[p1] = 11)
+                        continue;
+                     y = ypos[p1];
+                     midp2[p1][y] = p2;
+                     midp3[p1][y] = p3;
+                     midas[p1][y] = a;
+                     midor[p1][y] = orb;
+                     ypos[p1] += 1;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   i = 0;
+   command(MEMO, VISIBLE, 0, 0);
+   memoclear;
+   for (i < PLANETS)
+      {
+      x = (i % 8) * width / 11;
+      y = 20 + big * 18 + height *.4 * if (i >= 8);
+      int index[11]; real sorted[11];
+      move(midor[i], sorted, 88);        ` make a copy to sort into
+      int j = ypos[i];
+      for (j < 11)
+         sorted[j] = 100;            ` get rid of empty data
+      sort(sorted, index, 0);
+      j = 0;
+      for (j < ypos[i])
+         {
+         int n = index[j];
+         putplanet(x, y, midp2[i][n]);
+         putplanet(x + 20 + big * 8, y, midp3[i][n]);
+         putaspect(x + 40 + big * 16, y, midas[i][n]);
+         strset(s1, "%s=%s/%s", pname[i], pname[midp2[i][n]], pname[midp3[i][n]]);
+         if (findfilestr(1, s1, b) = 1)
+           {
+           trim(b);
+           strset(b, "%s = %s / %s=%s", planetname[i], planetname[midp2[i][n]], planetname[midp3[i][n]], b);
+           memoadd(b);
+           }
+         if (midor[i][n] < 0)
+            putstring(x + 58 + big * 34, y, "-");
+         else
+            putstring(x + 58 + big * 34, y, " ");
+         char tem[10], tem1[10];
+         strnum(tem, midor[i][n], -3);
+         ` get rid of first space and 0
+         n = 2;
+         while (tem[n] != 0)
+            {
+            tem1[n - 2] = tem[n];
+            n += 1;
+            }
+         tem1[n - 2] = 0;
+         putstring(x + 63 + big * 24, y + big * 8, tem1);
+         y += 20 + big * 8;
+         }
+      }
+   command(MEMO, VISIBLE, 1, 0);
+   command(MEMO, 10, 0, 0);   
+   visible(TRUE);
+   return;
+   
+:List;
+   command(TEXT, VISIBLE, 0, 0);
+   textclear(0);
+   if (ndx = 0){
+      lan("Midpoints", t);
+      strset(t, "%s: ", t);
+      textadd(0, t);}
+   
+   real mpList[300];
+   int planetList1[300], planetList2[300];
+   set(count, 0);
+   set(mpList, 1000);
+
+   p1 = SUN;
+   for (p1 < PLANETS)
+      {
+      p2 = p1 + 1;
+      for (p2 < PLANETS)
+         {
+         if (doplanets[p1] = FALSE or doplanets[p2] = FALSE)
+            continue;
+         if (ndx < 2)
+            mp = midpoint(syn[p1], syn[p2]);
+         if (ndx > 1)
+            mp = midpoint(syn[p1], syn[p2]) % mod;
+         ` add to arrays
+         mpList[count] = mp;
+         planetList1[count] = p1;
+         planetList2[count] = p2;
+         count += 1;
+         }
+      }
+   ` create list of midpoints for display in textbox for planet listing
+   i = 0; for (i < count){
+     if (ndx = 0){
+        strset(s2, "%p %s %p %0a %i", planetList1[i], "/", planetList2[i], mpList[i], mpList[i] / 30);
+        textadd(0, s2);}}
+   ` if degree sort.....
+   if (ndx > 0)
+      @Sort;
+      
+   ` add blank line
+   textadd(0, "");
+   
+   ` aspect listing
+   lan("Aspects", t);
+   strset(t, "%s: ", t);
+   textadd(0, t);
+   p1 = SUN;
+   for (p1 < PLANETS)
+      {
+      p2 = p1 + 1;
+      for (p2 < PLANETS)
+         {
+         mp = midpoint(planet[p1], planet[p2]);
+         p3 = SUN;
+         for (p3 < PLANETS)
+            {
+            a = CONJUNCTION;
+            for (a < ASPECTS)
+               {
+               if (doplanets[p1] = FALSE or doplanets[p2] = FALSE or
+                   doplanets[p3] = FALSE or doaspects[a] = FALSE)
+                  continue; 
+               orb = isangle(syn[p3], mp, aspectangle[a], maxorb);
+               if (orb >= 0)
+                  {
+                  strset(s1, "%p %e %0a %p / %p", p3, a, orb, p1, p2);
+                  textadd(0, s1);
+                  }
+               }
+            }
+         }
+      }
+   textshow(0);
+
+   return;
+
+:midpointScopes;
+setsymbolsize(0);
+  fill(0, 0, width - 200, height - 250, -2);
+
+  real mpScopes[300];
+  int planetScopes1[300], planetScopes2[300];
+  set(count, 0);
+  set(mpScopes, 1000);
+
+  ` create scope data
+  p1 = SUN;
+  for (p1 < PLANETS)
+    {
+    p2 = p1 + 1;
+    for (p2 < PLANETS)
+       {
+       if (doplanets[p1] = FALSE or doplanets[p2] = FALSE)
+          continue;
+       mp = midpoint(planet[p1], planet[p2]);
+       ` add to arrays
+       mpScopes[count] = mp;
+       planetScopes1[count] = p1;
+       planetScopes2[count] = p2;
+       count += 1;
+       }
+    }
+
+  real scopePlanets[PLANETS];
+
+  set(scopePlanets, -1);
+
+  i = 0; for (i < PLANETS){
+    if (check[i] = 0) continue;
+       scopePlanets[i] = planet[i];}
+
+  int sortedScopePlanets[PLANETS], sortedmpScopes[300];
+
+  ` create scopes
+  visible(0);
+  int w = 850;
+  strset(str, "%s", "360 Degree Midpoint Scope");
+  putstring(400, 20, str);
+  i = 0; for (i < 3){
+    line(50, 80 + i * 125, 900, 80 + i * 125, 1);
+    line(50, 105 + i * 125, 900, 105 + i * 125, 1);
+    line(50, 60 + i * 125, 50, 125 + i * 125, 1);
+    line(900, 60 + i * 125, 900, 125 + i * 125, 1);
+    j = 0; for (j < 120){
+      line(50 + j * w  / 120, 80 + i * 125, 50 + j * w  / 120, 83 + i * 125, 1);
+      line(50 + j * w  / 120, 103 + i * 125, 50 + j * w  / 120, 105 + i * 125, 1);
+      if (j % 10 = 0){
+         line(50 + j * w  / 120, 80 + i * 125, 50 + j * w  / 120, 88 + i * 125, 1);
+         line(50 + j * w  / 120, 97 + i * 125, 50 + j * w  / 120, 105 + i * 125, 1);}
+      if (j % 5 = 0){
+         line(50 + j * w  / 120, 80 + i * 125, 50 + j * w  / 120, 84 + i * 125, 1);
+         line(50 + j * w  / 120, 101 + i * 125, 50 + j * w  / 120, 105 + i * 125, 1);}
+      if (j % 30 = 0){
+         line(50 + j * w / 120, 80 + i * 125, 50 + j * w / 120, 105 + i * 125, 1);}}
+    sortplanets(scopePlanets, sortedScopePlanets, 4, w);
+    sortplanets(mpScopes, sortedmpScopes, 4, w);
+    j = 0; for (j < SIGNS){
+      if (j < 4 && i = 0){
+         putsign(148 + j * w  / 4, 85 + i * 125, j);}
+      if ((j > 3 && j < 8) && i = 1){
+         putsign(148 + (j - 4) * w  / 4, 85 + i * 125, j);}
+      if (j > 7 && i = 2){
+         putsign(148 + (j - 8) * w  / 4, 85 + i * 125, j);}}
+      j = 0; for (j < PLANETS){
+        if (sortedScopePlanets[j] < 0) continue;
+           if (planet[j] < 120 && i = 0){
+              putplanet(50 + sortedScopePlanets[j] * 3 * 2.36, 55 + i * 125, j);
+              line(55 + sortedScopePlanets[j] * 3 * 2.36, 75, 50 + scopePlanets[j] * 3 * 2.36, 80, 1);}
+           if ((planet[j] >= 120 && planet[j] < 240) && i = 1){
+              putplanet(50 + (sortedScopePlanets[j] - 120) * 3 * 2.36, 55 + i * 125, j);
+              line(55 + (sortedScopePlanets[j] - 120) * 3 * 2.36, 75 + i * 125, 50 + (scopePlanets[j] - 120) * 3 * 2.36, 80 + i * 125, 1);}
+           if ((planet[j] >= 240) && i = 2){
+              putplanet(50 + (sortedScopePlanets[j] - 240) * 3 * 2.36, 55 + i * 125, j);
+              line(55 + (sortedScopePlanets[j] - 240) * 3 * 2.36, 75 + i * 125, 50 + (scopePlanets[j] - 240) * 3 * 2.36, 80 + i * 125, 1);}}
+      j = 0; for (j < count){
+        if (mpScopes[j] < 120 && i = 0){
+           putplanet(50 + sortedmpScopes[j] * 3 * 2.36, 115 + i * 125, planetScopes1[j]);
+           putplanet(50 + sortedmpScopes[j] * 3 * 2.36, 135 + i * 125, planetScopes2[j]);
+           line(50 + mpScopes[j] * 3 * 2.36, 105 + i * 125, 55 + sortedmpScopes[j] * 3 * 2.36, 110 + i * 125, 1);}
+        if ((mpScopes[j] >= 120 && mpScopes[j] < 240) && i = 1){
+           putplanet(50 + (sortedmpScopes[j] - 120) * 3 * 2.36, 115 + i * 125, planetScopes1[j]);
+           putplanet(50 + (sortedmpScopes[j] - 120) * 3 * 2.36, 135 + i * 125, planetScopes2[j]);
+           line(50 + (mpScopes[j] - 120) * 3 * 2.36, 105 + i * 125, 55 + (sortedmpScopes[j] - 120) * 3 * 2.36, 110 + i * 125, 1);}
+        if (mpScopes[j] >= 240 && i = 2){
+           putplanet(50 + (sortedmpScopes[j] - 240) * 3 * 2.36, 115 + i * 125, planetScopes1[j]);
+           putplanet(50 + (sortedmpScopes[j] - 240) * 3 * 2.36, 135 + i * 125, planetScopes2[j]);
+           line(50 + (mpScopes[j] - 240) * 3 * 2.36, 105 + i * 125, 55 + (sortedmpScopes[j] - 240) * 3 * 2.36, 110 + i * 125, 1);}}` }
+   $ if (i = 1){
+          j = 0; for (j < PLANETS){
+            if (check[j] = 0) continue;
+               scopePlanets[j] = planet[j];
+               scopePlanets[j] = (scopePlanets[j] % 90) * 4;}
+          sortplanets(scopePlanets, sortedScopePlanets, 8, w);
+          j = 0; for (j < 91){
+            line(50 + j * w / 90, 80 + i * 125, 50 + j * w / 90, 105 + i * 125, 1);
+            if (j % 30 = 0){
+               line(50 + j * w / 90, 60 + i * 125, 50 + j * w / 90, 125 + i * 125, 1);
+               putnumber(45 + j * w / 90, 40 + i * 125, j);}
+            if (j % 10 = 0)
+               line(50 + j * w / 90, 70 + i * 125, 50 + j * w / 90, 115 + i * 125, 1);
+            if (j % 5 = 0)
+               line(50 + j * w / 90, 75 + i * 125, 50 + j * w / 90, 110 + i * 125, 1);}
+          j = 0; for (j < PLANETS){
+            if (sortedScopePlanets[j] < 0) continue;
+               putplanet(50 + sortedScopePlanets[j] * 2.36, 180, j);
+               line(55 + sortedScopePlanets[j] * 2.36, 200, 50 + scopePlanets[j] * 2.36, 205, 1);}}
+    if (i = 2){
+          j = 0; for (j < PLANETS){
+            if (check[j] = 0) continue;
+               scopePlanets[j] = planet[j];
+               scopePlanets[j] = (scopePlanets[j] % 45) * 8;}
+          sortplanets(scopePlanets, sortedScopePlanets, 8, w);
+          j = 0; for (j < 46){
+            line(50 + j * w / 45, 80 + i * 125, 50 + j * w / 45, 105 + i * 125, 1);
+            if (j % 15 = 0){
+               line(50 + j * w / 45, 60 + i * 125, 50 + j * w / 45, 125 + i * 125, 1);
+               putnumber(45 + j * w / 45, 40 + i * 125, j);}
+            if (j % 5 = 0)
+               line(50 + j * w / 45, 70 + i * 125, 50 + j * w / 45, 115 + i * 125, 1);}
+          j = 0; for (j < PLANETS){
+            if (sortedScopePlanets[j] < 0) continue;
+               putplanet(50 + sortedScopePlanets[j] * 2.36, 305, j);
+               line(55 + sortedScopePlanets[j] * 2.36, 325, 50 + scopePlanets[j] * 2.36, 330, 1);}}$ }
+  visible(1);
+setsymbolsize(big);
+  return;
+
+:Sort;
+
+  sort(mpList, mpIndex, 0);
+
+  textclear(0);
+  lan("Midpoints Sort", t);
+  strset(t, "%s: ", t);
+  textadd(0, t);
+
+  i = 0; for (i < count){
+       strset(s2, "%p %s %p %2a", planetList1[mpIndex[i]], "/", planetList2[mpIndex[i]], mpList[i]);
+       textadd(0, s2);}
+
+  textshow(0);
+
+  ` ???? speeds up display and prevents jumping in scrolling text box
+  command(TEXT, VISIBLE, 0, 0);
+
+  return;
+
+:help;
+   help("Help Midpoints", "This program provides information about midpoints.
+
+Initially a so called midpoint tree is drawn. All planets are shown with beneath them planets that have their midpoint make an aspect with this first planet.
+
+A tree will display max 11 points, choose a lesser orb or less aspects or less planets to avoid this. A listing of midpoints in planetary order is also shown by default.
+
+This program also calculates a midpoint sort and displays these in a scrolling textbox based on the modulus chosen. The default modulus is 360 degrees, or the full zodiacal circle. Other choices include 90, 45 and 22.5 degrees.
+
+Use the checkboxes to determine which planets to consider in midpoint pairs. If a different modulus is chosen, the midpoint sort will automatically be recalculated. The planet choice will be re-loaded the next time the module is run.
+
+Use the synastry option to choose another radix to compare the midpoints of the original radix to. Scopes are not affected.
+
+Users can explore the placement of midpoints in the 360 scope. This option is selected by choosing Scope in the View option box. Users should limit the selection of planets to about a maximum of six or seven, otherwise the scope becomes difficult to interpret.
+");
+   return;
+:helpnl;
+help("NL Help midpunten", "Dit programma biedt informatie over middelpunten.
+
+Aanvankelijk wordt een zogenaamde middelpuntboom getekend. Alle planeten worden getoond met daaronder planeten waarvan het middelpunt een aspect vormt met deze eerste planeet.
+
+Een boom zal maximaal 11 punten weergeven, kies een mindere bol of minder aspecten of minder planeten om dit te vermijden. Een lijst met middelpunten in planetaire volgorde wordt standaard ook weergegeven.
+
+Dit programma berekent ook een soort middelpunt en geeft deze weer in een scrollend tekstvak op basis van de gekozen modulus. De standaardmodulus is 360 graden, of de volledige dierenriemcirkel. Andere keuzes zijn 90, 45 en 22,5 graden.
+
+Gebruik de selectievakjes om te bepalen welke planeten u in middelpuntparen moet overwegen. Als een andere modulus wordt gekozen, wordt de middelpuntsoort automatisch opnieuw berekend. De planeetkeuze wordt de volgende keer dat de module wordt uitgevoerd opnieuw geladen.
+
+Gebruik Synastrie om een andere radix op te geven om de midpunten mee te vergelijken. Scopes grafiekjes blijven hetzelfde.
+
+Gebruikers kunnen de plaatsing van middelpunten in het 360-bereik verkennen. Deze optie wordt geselecteerd door Scope te kiezen in het vak View. Gebruikers moeten de selectie van planeten beperken tot ongeveer zes of zeven, anders wordt het bereik moeilijk te interpreteren.");
+return;

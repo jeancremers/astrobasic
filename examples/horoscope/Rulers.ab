@@ -1,0 +1,266 @@
+char inifile[256] = "rulers.ini", data[12][99], pieces[12][3], sort, s[99], rulers[SIGNS], s1[100], s2[100], housepos[16];
+real house[HOUSES], planet[PLANETS], plan[10];
+int z = 18, ndx[12];
+
+getrulers(rulers);
+window(700, 530);
+menu(0, "Close", Close);
+menu(0, "Radix", GetRadix);
+menu(0, "Help", NULL);
+menu(3, "English", help);
+menu(3, "Nederlands", helpnl);
+@load;
+checkbox(width - 100, 10, "Sort", sort, Display);
+copyhoroscope(-1, 0);
+onclose(save);
+@SetCaption;
+@Display;
+run;
+
+:help;
+   help("Help Rulers", "On the left you see a list with planets in their signs followed by the rulers of the sign and the house the rulers is in.
+In the middle you see a list with the houses, the signs on their cusps and their rulers, and the house that rulers in in.
+On the right you see the rulerships for the planets at the top and for the houses below.
+At the bottom of each of these two lists is a count.
+Clicking Sort groups the dispositors.
+");
+   return;
+
+:helpnl;
+help("NL Help Heersers", "Aan de linkerkant zie je een lijst met planeten in hun tekens gevolgd door de heersers van het teken en het huis waar de heersers in staan.
+In het midden zie je een lijst met de huizen, de tekens op de cuspen en hun heersers, en het huis waarin de heersers staan.
+Aan de rechterkant zie je de heersers voor de planeten bovenaan en voor de huizen eronder.
+Onderaan elk van deze twee lijsten staat een telling.
+Klik op Sorteren om de dispositors te groeperen.");
+return;
+
+
+:GetRadix;
+   if (FALSE = gethoroscope("", 0, RADIX))
+      return; 
+   @SetCaption;
+   @Display;
+   return;
+
+:SetCaption;
+   getname(0, s1);
+   lan("Rulers", s);
+   strset(s2, "%s %s", s, s1);
+   setcaption(s2);
+   return;
+
+:Close;
+   quit;
+
+:Display;
+  gethousepos(0, housepos);
+  gethouses(0, house);
+  getplanets(0, planet);
+  move(planet, plan, 10 * 8);
+  visible(FALSE);
+  fill(0, 0, width, height, -2);
+  @planets(20, 10);
+  @houses(165, 10);
+`  @rulers(300, 10);
+  @rulers1(300, 10);
+  visible(TRUE);
+  return;
+  
+#rulers1(int x, int y)
+{
+putstring(x, y, "Dispositors");
+y += 24;
+int had[10], last[10];
+}
+
+#rulers(int x, int y)
+{
+putstring(x, y, "Dispositors");
+y += 24;
+int had[10], last[10];
+set(had, 0);
+set(last, 0);
+set(data, 0);
+int i = 0; for (i <= PLUTO)
+  {
+  set(had, 0);
+  had[i] = 1;
+  if (sort = 0)
+    putplanet(x, y, i);
+  else
+    {
+    strset(s, "%d|", i);
+    strcat(data[i], s);
+    }  
+  int ruler = rulers[planet[i] / 30];
+  :again;
+  if (sort = 0)
+    putplanet(-10, y, ruler);
+  else
+    {
+    strset(s, "%d|", ruler);
+    strcat(data[i], s);
+    }  
+  if (had[ruler] = 0)
+    {
+    had[ruler] = 1;
+    ruler = rulers[planet[ruler] / 30];
+    goto again;
+    }
+  else
+    last[ruler] += 1;  
+  y += z;
+  }
+int n = 0;
+putstring(450, y, "");
+int index[10];
+sort(last, index, 1);
+i = 0; for (i <= PLUTO)
+  {
+  if (last[i] > 0)
+    {
+    putnumber(-1, y, last[i]);
+    putstring(-1, y, "x");
+    putplanet(-1, y, index[i]);
+    putstring(-1, y, ", ");
+    }
+  }
+if (sort = 1)
+  {
+  i = 0; for (i <= PLUTO)
+    {
+    n = split(data[i], pieces, '|');
+    strset(data[i], "%2s|%s", pieces[n - 1], data[i]);
+    }
+  strsort(data, ndx);
+  y = 34;
+  i = 0; for (i <= PLUTO)
+    {
+    putstring(288, 34, "");
+    n = split(data[i], pieces, '|');
+    int j = 1; for (j < n)
+      {
+      int p = numstr(pieces[j]);
+      putplanet(-10, y, p);
+      }
+    y += z;  
+    }
+  
+  }
+`-------------------------------
+y += 30;
+int hadhouse[HOUSES], lasthouse[HOUSES], indexhouse[HOUSES];
+set(hadhouse, 0);
+set(lasthouse, 0);
+set(data, 0);
+i = 0; for (i < HOUSES)
+  {
+  set(hadhouse, 0);
+  hadhouse[i] = 1;
+  strset(s, "%d - ", i + 1);
+  if (sort = 0)
+    putstring(x, y, s);
+  else
+    {
+    strset(s, "%d|", i);
+    strcat(data[i], s);
+    }  
+  ruler = housepos[rulers[house[i] / 30]];
+  :again1;
+  if (sort = 0)
+    putnumber(-10, y, ruler + 1);
+  else
+    {
+    strset(s, "%d|", ruler);
+    strcat(data[i], s);
+    }  
+  if (hadhouse[ruler] = 0)
+    {
+    hadhouse[ruler] = 1;
+    ruler = housepos[rulers[house[ruler] / 30]];
+    goto again1;
+    }
+  else
+    lasthouse[ruler] += 1;  
+  y += z;
+  }
+n = 0;
+y += 10;
+putstring(450, y, "");
+sort(lasthouse, indexhouse, 1);
+i = 0; for (i < HOUSES)
+  {
+  if (lasthouse[i] > 0)
+    {
+    strset(s, "%d x %d, ", lasthouse[i], indexhouse[i] + 1);
+    putstring(-1, y, s);
+    }
+  }
+if (sort = 1)
+  {
+  i = 0; for (i < HOUSES)
+    {
+    n = split(data[i], pieces, '|');
+    int k = numstr(pieces[n - 1]);
+    strset(data[i], "%02d%02d|%s", k, i, data[i]);   ` sort on last, then on house
+    }
+  strsort(data, ndx);
+  y = 250;
+  i = 0; for (i < HOUSES)
+    {
+    putstring(290, y, "");
+    n = split(data[i], pieces, '|');
+    j = 1; for (j < n)
+      {
+      p = numstr(pieces[j]) + 1;
+      putnumber(-10, y, p);
+      if (j = 1)
+        putstring(-1, y, " -");
+      }
+    y += z;  
+    }
+  }  
+}  
+
+#planets(int x, int y)
+{   
+putstring(x, y, "Planets");
+y += 24;
+int i = 0; for (i < PLANETS)
+  {
+  int sign = planet[i] / 30, ruler = rulers[sign];
+  putplanet(x, y, i);
+  putsign(-10, y, sign);
+  putplanet(-10, y, ruler);
+  putnumber(-10, y, housepos[ruler] + 1);
+  y += z;
+  }
+}
+
+#houses(int x, int y)
+{   
+putstring(x, y, "Houses");
+int i = 0;
+y += 24;
+for (i < HOUSES)
+  {
+  int sign = house[i] / 30, ruler = rulers[sign];
+  putnumber(x, y, i + 1);
+  putsign(-10, y, sign);
+  putplanet(-10, y, ruler);
+  putnumber(-10, y, housepos[ruler] + 1);
+  y += z;
+  }
+}
+
+:load;
+  fileopen(inifile, FILEREADAB);
+  fileread(sort);
+  fileclose;
+  return;
+  
+:save;
+  fileopen(inifile, FILEWRITEAB);
+  filewrite(sort);
+  fileclose;
+  return;

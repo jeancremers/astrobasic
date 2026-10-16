@@ -1,0 +1,26 @@
+window(0, 0);
+menu(0, "Close", close);
+int x, y, w = command(FUNCTION, 61, 0, 0), h = command(FUNCTION, 61, 1, 0);
+char s[99];
+visible(0);
+while (y < height)
+  {
+  line(0, y, width, y, -1);
+  putnumber(0, y, y);
+  y += 100;
+  }
+while (x < width)
+  {
+  line(x, 0, x, height, -1);
+  putnumber(x, 0, x);
+  x += 100;
+  }
+x = command(FUNCTION, 35, 0, 0); ` dpi
+strset(s, "%d %d DPI %d", w, h, x);
+setcaption(s);
+putstring(40, 40, s);
+visible(1);
+run;
+
+:close;
+  quit;

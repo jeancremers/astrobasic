@@ -1,0 +1,101 @@
+window(0, 0);
+menu(0, "Close", close);
+menu(0, "Text", text);
+menu(0, "Size", size);
+menu(0, "Options", NULL);
+menu(4, "Bold", go);
+menu(0, "Help", NULL);
+menu(5, "English", help);
+menu(5, "Nederlands", helpnl);
+command(MENU, 4, AUTOCHECK, 1);
+button(width - 75, 0, "Menu", NULL);
+command(BUTTON, buttonnumber, 10, 0);
+char str[99] = "Happy,2019", t[99], s[99], inifile[256] = "hello.ini", bold = 1;
+int pp[1999][999], x, y, size = 12;
+@load;
+fontsize(16);
+onclose(save);
+@go;
+run;
+
+:go;
+  visible(0);
+  set(pp, 0);
+  strcpy(s, str);
+  t[0] = 0;
+  fill(0, 0, width, height, -2);
+  bold = command(MENU, 4, ISCHECK, 0);
+  command(FUNCTION, 36, 2, bold); `sets bold
+  int p = strchr(s, 0, ','), wid = textwidth(s), hei = textheight(s), forecol = command(FUNCTION, 43, 2, 0);
+  wid = min(wid, 1999);
+  hei = min(hei, 999);
+  if (p > -1)
+    {
+    substr(s, p + 1, 99, t);                      ` split on comma
+    s[p] = 0;
+    putstring(0, hei, t);
+    hei *= 2;
+    }
+  putstring(0, 0, s);
+  x = 0; for (x < wid)
+    {
+    y = 0; for (y < hei)
+      {
+      if (getpixel(x, y) = forecol)
+        pp[x][y] = 1;                              ` find all pixels
+      }
+    }
+  fill(0, 0, width, height, -2);
+  x = 0; for (x < wid)
+    {
+    y = 0; for (y < hei)
+      {
+      if (pp[x][y] = 1)
+        {
+        int m = random(90);
+        putsymbol(10 + x * size, y * size - 10, m, 0);
+        }
+      }
+    }
+  visible(1);
+  setcaption(str);
+  return;
+
+:size;
+  if (getnumber("", "Size", size) = 1)
+    @go;
+  return;
+
+:text;
+  if (getstring("", "Enter message", str) = 1)
+    @go;
+  return;
+
+:close;
+  quit;
+
+:help;
+  help("Happy 2019", "Enter some words, use a comma to separate them in two lines.");
+  return;
+
+:helpnl;
+  help("NL Happy 2019", "Voer Text in, gebruik een comma voor twee regels te maken.");
+  return;
+
+:load;
+  fileopen(inifile, FILEREADAB);
+  fileread(str);
+  fileread(size);
+  fileread(bold);
+  command(MENU, 4, SETCHECK, bold);
+  fileclose;
+  return;
+
+:save;
+  fileopen(inifile, FILEWRITEAB);
+  filewrite(str);
+  filewrite(size);
+  filewrite(bold);
+  fileclose;
+  return;
+

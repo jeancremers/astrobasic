@@ -1,0 +1,96 @@
+window(500, 500);
+char path[260], sesname[60], s[222], empty[0][0], filename[256], name[61];
+strset(path, "%scfg", home);
+int i = 0, n = findfiles(path, "*.ses", 0), index, size = 256 + 61, count, m;
+ini(0, "session", s, sesname, 0);
+setfilename(sesname, "", sesname, 2); ` remove path
+combobox(50, 10, 200, empty, index, go);
+for (i < n && i < 99)
+  {
+  memval(0, i, &path);
+  command(COMBO, 0, 16, &path);
+  if (strcmp(path, sesname) = 1)
+    m = i;
+  }
+command(COMBO, 0, 6, m);
+menu(0, "Close", close);
+menu(0, "Add", add);
+menu(0, "Delete", del);
+menu(0, "Help", NULL);
+menu(4, "English", help);
+menu(4, "Nederlands", helpnl);
+memget(0, 99, size);
+text(0, 40, width, height - 40, 0, 0, NULL);
+texttab(0, 0, 150);
+@go;
+run;
+
+:add;
+  if (gethoroscope("", 0, ANYTYPE) = 0)
+    return;
+  strcmd(12, 0, filename); ` get the filename from last from gethoroscope()
+  getname(0, name);
+  if (fileopen(sesname, FILEWRITECFG) = 0)
+    return;
+  filewrite(filename);
+  filewrite(name);
+  i = 0; for (i < count)
+    {
+    memval(0, i, &filename);
+    filewrite(filename);
+    filewrite(name);
+    }
+  fileclose;
+  @go;
+  return;
+  
+:del;
+  n = command(TEXT, 11, 0, 0);
+  memval(0, n, &filename);
+  strset(s, "%s%t%s", filename, name);
+  if (ask("Delete", s) = 0)
+    return;
+  if (fileopen(sesname, FILEWRITECFG) = 0)
+    return;
+  i = 0; for (i < count)
+    {
+    if (i = n) continue;
+    memval(0, i, &filename);
+    filewrite(filename);
+    filewrite(name);
+    }
+  fileclose;
+  @go;
+  return;
+  
+:go;
+  textclear(0);
+  command(COMBO, 0, 17, &sesname);
+  strset(s, "%scfg\%s", home, sesname);
+  count = filesize(s) / size;
+  strcmd(7, 0, s);
+  i = 0; for (i < count)
+    {
+    memval(0, i, &filename);
+    strset(s, "%s%t%s", filename, name);
+    textadd(0, s);
+    }
+  textshow(0);
+  command(TEXT, 12, 0, 0);
+  return;
+
+:close;
+  quit;
+:help;
+  help("Help Session Manager", "
+You can manage the content of sessions here.
+Use Add to add horoscopes, delete to delete them from the session.
+If you want to add a complete new session, use Session Save and enter a new filename in the box below.
+If you want to delete / rename a complete session, use Session Load and right click on a session to delete / rename it." );
+  return;
+:helpnl;
+help("NL Help", "U kunt de inhoud van de sessies hier beheren.
+Gebruik Toevoegen om horoscopen toe te voegen, verwijderen om ze uit de sessie te verwijderen.
+Als u een volledig nieuwe sessie wilt toevoegen, gebruikt u Sessie opslaan en voert u een nieuwe bestandsnaam in het vak hieronder in.
+Als u een complete sessie wilt verwijderen / hernoemen, gebruikt u Sessie Laad en klikt u met de rechtermuisknop op een sessie om deze te verwijderen / de naam ervan te wijzigen. ");
+return;

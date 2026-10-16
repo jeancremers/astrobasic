@@ -1,0 +1,42 @@
+window(600, -100);
+int n;
+updownx(20, 0, 0, go, 1, 25, 1, &n);
+text(0, 20, width, height - 20, 1, 1, NULL);
+`248
+char s[999], t[99];
+@go;
+run;
+
+:go;
+  command(FUNCTION, 69, n, 0);  ` switch charset
+  command(TEXT, 0, VISIBLE, 0);
+  textclear(0);
+`  textadd(0, "יייייייייי");
+  strcpy(s, "Signs ");
+  int i = 0; for (i < SIGNS)
+    {
+    strset(t, "%i  " , i);
+    strcat(s, t);
+    }
+  textadd(0, s);
+  strcpy(s, "Planets ");
+  i = 0; for (i < PLANETS)
+    {
+    strset(t, "%p  " , i);
+    strcat(s, t);
+    }
+  textadd(0, s);
+  strcpy(s, "Aspects ");
+  i = 0; for (i < ASPECTS)
+    {
+    strset(t, "%e  " , i);
+    strcat(s, t);
+    }
+  textadd(0, s);                            ` 163
+  i = 0; for (i < 256)
+    {
+    strset(s, "%d%t%c", i, i);
+    textadd(0, s);
+    }
+  textshow(0);
+  return;

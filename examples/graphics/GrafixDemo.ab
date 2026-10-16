@@ -1,0 +1,250 @@
+$ 
+Grafix demo program.
+14-12-2018 midi added
+:)
+$
+
+window (screenheight - 75, screenheight - 50);
+menu(0, "Close", close);
+int i, j, k, m, n, a, mx = width / 2, my = height / 2, radius = my, forecolor, backcolor, x, y, red, green, blue;
+char sound = 0, pause;
+checkbox(0, 0, "Sound", sound, NULL);
+checkbox(100, 0, "Pause", pause, pause);
+timer(100, go);
+run;
+
+:pause;
+  timer((1 - pause) * 100, go);
+  return;
+
+:go;
+  if (command(CHECKBOX, 1, 8, 0) = 1)
+    timer(0, go);
+  fill(0, 0, width, height, backcolor);
+  red = random(256);
+  green = random(256);
+  blue = random(256);
+  if (sound = 1)
+    {
+    k = random(128);
+    midi(2, k);
+    a = 48 + random(40);
+    midi(1, a);
+    }
+  k = random(8 + sound);
+  switch (k)
+    {
+    :0; @boxes;    break;
+    :1; @circles;  break;
+    :2; @zodiac;  break;
+    :3; @astro;  break;
+    :4; @circles2;  break;
+    :5; @astro2;  break;
+    :6; @ellip;  break;
+    :7; @fade; break;
+    :8; @wave; break;
+    }
+  red = random(256);
+  green = random(256);
+  blue = random(256);
+  backcolor = rgb(red, green, blue);
+  if (sound = 1)
+    midi(0, a);
+  return;
+  
+:wave;
+  k = random(128);
+  n = random(48);
+  midi(2, k);
+  j = 24 + n;
+  i = 0; for (i < 40)
+    {
+    midi(1, j + i);
+    wait(5);
+    midi(0, j + i);
+    }
+  j = 64 + n;
+  i = 0; for (i < 40)
+    {
+    midi(1, j - i);
+    wait(5);
+    midi(0, j - i);
+    }
+  return;
+
+:fade;
+  i = random(3);
+  switch (i)
+    {
+    :0; red = 0; for (red < 256)
+      {
+      backcolor = rgb(red, green, blue);
+      fill(0, 0, width, height, backcolor);
+      @putastro;
+      } 
+    while (red >= 0)
+      {
+      backcolor = rgb(red, green, blue);
+      fill(0, 0, width, height, backcolor);
+      red -= 1;
+      @putastro;
+      }
+    break;
+    :1; green = 0; for (green < 256)
+      {
+      backcolor = rgb(red, green, blue);
+      fill(0, 0, width, height, backcolor);
+      @putastro;
+      }
+    while (green >= 0)
+      {
+      backcolor = rgb(red, green, blue);
+      fill(0, 0, width, height, backcolor);
+      green -= 1;
+      @putastro;
+      }
+    break;
+    :2; blue = 0; for (blue < 256)
+      {
+      backcolor = rgb(red, green, blue);
+      fill(0, 0, width, height, backcolor);
+      @putastro;
+      }
+    while (blue >= 0)
+      {
+      backcolor = rgb(red, green, blue);
+      fill(0, 0, width, height, backcolor);
+      blue -= 1;
+      @putastro;
+      }
+    }  
+  return;
+
+  
+:boxes;
+  i = 0; for (i < radius)
+    {
+    escape(close);
+    char style = 2 + random(6);
+    box(mx - i, my - i, i * 2, i * 2, backcolor, style);
+    @putastro;
+    i += 1;
+    }
+  return;
+
+:circles;
+  i = 0; for (i < radius)
+    {
+    escape(close);
+    forecolor = rgb(red, green, blue);
+    circle(mx, my, i, forecolor);
+    @putastro;
+    }
+  return;
+
+:zodiac;
+  command(FUNCTION, 38, 1, 0); ` brush style
+  i = 0; for (i < 10)
+    {
+    escape(close);
+    fill(0, 0, width, height, backcolor);
+    x = random(radius);
+    y = random(radius);
+    j = random(radius);
+    drawzodiac(i * 36, mx, my, x, y, j);
+    wait(100);
+    }
+  return;   
+
+:putastro;
+  x = random(width);
+  y = random(height);
+  k = random(2);
+  setsymbolsize(k);
+  m = random(72);
+  if (m < PLANETS)
+    putplanet(x, y, m);
+  if (m >= PLANETS && m < PLANETS + SIGNS)  
+    putsign(x, y, m - PLANETS);
+  if (m >= PLANETS + SIGNS && m < PLANETS + SIGNS + ASPECTS)  
+    putaspect(x, y, m - PLANETS - SIGNS);
+  if (m >= PLANETS + SIGNS + ASPECTS)
+    objectsymbol(x, y, m - PLANETS - SIGNS - ASPECTS);  
+  return;  
+
+:astro2;
+  i = 0; for (i < 999)
+    @putastro;
+  return;
+    
+:astro;
+  i = 0; for (i < 360)
+    {
+    escape(close);
+    radius = random(my);
+    getcirclepos(mx, my, radius, i, x, y);
+    k = random(2);
+    setsymbolsize(k);
+    line(mx, my, x, y, forecolor);
+    k = random (4);
+    switch (k)
+      {
+      :0; getcirclepos(mx, my, radius, i, x, y);
+          j = random(12);
+          putsign(x - 8, y - 8, j);
+          break;
+      :1; getcirclepos(mx, my, radius, i, x, y);
+          j = random(16);
+          putplanet(x - 8, y - 8, j);
+          break;
+      :2; getcirclepos(mx, my, radius, i, x, y);
+          j = random(11);
+          putaspect(x - 8, y - 8, j);
+          break;
+      :3; getcirclepos(mx, my, radius, i, x, y);
+          j = random(56);
+          objectsymbol(x, y, j);
+          break;  
+       }
+    }
+  radius = my;  
+  return;
+  
+:circles2;  
+  i = 0; for (i < radius)
+    {
+    escape(close);
+    x = random(width);
+    y = random(height);
+    k = random(width);
+    backcolor = rgb(red, green, blue);
+    j = random(8);
+    command(FUNCTION, 38, 1, j);
+    circle(mx, my, i, backcolor);
+    @putastro;
+    }
+  return;
+
+:ellip;
+  i = 0; for (i < radius)
+    {
+    escape(close);
+    x = random(width);
+    y = random(height);
+    k = random(width);
+    m = random(width);
+    red = random(256);
+    green = random(256);
+    blue = random(256);
+    backcolor = rgb(red, green, blue);
+    command(FUNCTION, 38, 0, backcolor);
+    j = random(8);
+    command(FUNCTION, 38, 1, j);
+    ellipse(x, y, k, m, backcolor);
+    @putastro;
+    i += 2;
+    }
+  return;
+
+:close;
+   quit;

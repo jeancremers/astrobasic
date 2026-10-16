@@ -1,0 +1,175 @@
+char sl, OutName[256], nstr[10] = "10", caption[100], datestr[11], timestr[9], DbName[256], place[100], name[10], str[1000], sdstr[22], ststr[11], edstr[11], etstr[9], DoDel = TRUE, SeedString[10] = "-1", csvname[256], item[2][66], s[99], t[99], t1[99], t2[99];
+int i, num = 100, starttime[6] = { 2000, 1, 1, 0, 0, 0 }, endtime[6] = { 2100, 1, 1, 0, 0, 0 }, now[6], zone, seednum;
+real lon, lat, start, end, period, gmt;
+strcpy(place, defaultplace);
+window(500, 250);
+menu(0, "Close", Close);
+menu(0, "Start Time", Start);
+menu(0, "End", End);
+menu(0, "Place", Place);
+menu(0, "Go", Go);
+menu(0, "Csv", Csv);
+menu(0, "Help", NULL);
+menu(, "English", help);
+menu(, "Nederlands", helpnl);
+fill(0, 0, width, height, -2);
+@Load;
+onclose(Save);
+label(20, 20, "Horoscopes");
+edit(140, 20, 60, nstr, NULL);
+label(20, 50, "Seed");
+edit(140, 50, 60, SeedString, NULL);
+checkbox(20, 80, "Delete old", DoDel, NULL);
+sl = label(16, 120, "Status");
+strset(OutName, "%sdb\Random.db", home);
+@status;
+run;
+`-----------------------------------------------------------------------------
+:Csv;
+  if (getfilename("Csv Name", "*.csv|*.csv", csvname, 1, FILEREADDB, 0) = 0)
+    return;
+  if (DoDel = 1)
+    deletefile(OutName);
+  if (FALSE = writeopen(OutName, 0))
+    return;
+  seednum = numstr(SeedString);
+  if (seednum >= 0)
+    seed(seednum);
+  while (lineread(csvname, s) = 1)
+    {
+    split(s, item, ';');
+    num = numstr(item[1]);
+    set(starttime, 0);
+    set(endtime, 0);
+    starttime[0] = numstr(item[0]);
+    endtime[0] = starttime[0] + 1;
+    starttime[1] = 1;
+    starttime[2] = 1;
+    endtime[1] = 1;
+    endtime[2] = 1;
+    @database;
+    }  
+  writeclose;
+  setcaption("Done");
+  return;
+`-----------------------------------------------------------------------------
+:Load;
+  fileopen("random.ini", FILEREADAB);
+  fileread(DoDel);
+  fileread(DbName);
+  fileread(starttime);
+  fileread(endtime);
+  fileread(nstr);
+  fileread(SeedString);
+  fileclose;
+  return;
+`-----------------------------------------------------------------------------
+:Save;
+  fileopen("random.ini", FILEWRITEAB);
+  filewrite(DoDel);
+  filewrite(DbName);
+  filewrite(starttime);
+  filewrite(endtime);
+  filewrite(nstr);
+  filewrite(SeedString);
+  fileclose;
+  return;  
+`-----------------------------------------------------------------------------
+:Close;
+   quit;
+`-----------------------------------------------------------------------------
+:status;
+  timetostring(starttime, sdstr, ststr, 0);
+  timetostring(endtime, edstr, etstr, 0);
+  strcpy(s, place);
+  strcmd(5, ',', s);
+  lan("Start", t);
+  lan("End", t1);
+  lan("Place", t2);
+  strset(str, "%s: %s %s%n%s: %s %s%n%s: %s", t, sdstr, ststr, t1, edstr, etstr, t2, s);
+  labelset(sl, str);
+  return;
+`-----------------------------------------------------------------------------
+:database;                       ` in: start, end
+  start = timetojulian(starttime);
+  end = timetojulian(endtime);
+  period = (end - start) * 1440;
+  i = 0; for (i < num)
+    {
+    gmt = start + random(period) / 1440;
+    juliantotime(gmt, now);
+    timetostring(now, datestr, timestr, 0);
+    calculate(0, gmt, lon, lat, -1);                 
+    strnum(name, i, 0);
+    setname(0, name);
+    sethoroscopeplace(0, place);
+    sethoroscopetime(0, gmt, 0);
+    writeadd(0);
+    strset(caption, "%s No %d", datestr, i);
+    setcaption(caption);
+    }
+  return;
+`-----------------------------------------------------------------------------
+:Go;
+  if (DoDel = 1)
+    deletefile(OutName);
+  if (FALSE = writeopen(OutName, 0))
+    return;
+  seednum = numstr(SeedString);
+  if (seednum >= 0)
+    seed(seednum);
+  num = numstr(nstr);
+  @database;
+  writeclose;
+  setcaption("Done");
+  return;
+`-----------------------------------------------------------------------------
+:Start;
+   gettime(starttime);
+   @status;
+   return;
+`-----------------------------------------------------------------------------
+:End;
+   gettime(endtime);
+   @status;
+   return;
+`-----------------------------------------------------------------------------
+:Place;
+   getplace(place, lon, lat, 1);
+   @status;
+   return;
+`-----------------------------------------------------------------------------
+:help;
+   help("Random help", "
+This program generates random horoscopes which can serve as reference in statistical investigations.
+
+Use Start and End to set a period for the calculations.
+Use Place to set a certain place for the calculations.
+Use Number to set the amount of horoscopes to generate.
+The program will then generate c:\planetdance\db\random.db with these horoscopes. 
+
+Csv Input takes a .csv like this:
+1990;13
+1991;15
+1992;5
+1993;9
+It will then generate for those years that amount of horoscopes.
+
+");
+   return;
+`-----------------------------------------------------------------------------
+:helpnl;
+help("NL Help Random", "Dit programma genereert willekeurige horoscopen die als referentie kunnen dienen bij statistisch onderzoek.
+
+Gebruik Start en einde om een periode in te stellen voor de berekeningen.
+Gebruik Plaats om een bepaalde plaats in te stellen voor de berekeningen.
+Gebruik Nummer om het aantal horoscopen in te stellen.
+Het programma genereert dan c:\planetdance\db\random.db met deze horoscopen.
+
+Csv Input neemt een .csv-bestand als volgt:
+1990; 13
+1991; 15
+1992; 5
+1993; 9
+Het zal dan voor die jaren dat aantal horoscopen genereren.");
+return;

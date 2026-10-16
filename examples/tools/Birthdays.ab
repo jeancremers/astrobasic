@@ -1,0 +1,159 @@
+char empty, dm, inifile[256] = "birthdays.ini", dbname[256], s[999], ds[22], ts[22], autostart, seen[256], name[99];
+int total, i, birth[6], now[6], today[3], last[3], n, k, future[6], ndx[9999];
+real jd, planet[PLANETS], jdbirth, jdfuture;
+strset(seen, "%scfg\birthday.seen", home);
+getdisk(last, seen);
+getsystemtime(now);
+move(now, today, 3*4);
+if (strcmp("auto", cmdline) = 1 && last[0] = today[0] && last[1] = today[1] && last[2] = today[2])
+  quit;
+jd = timetojulian(now);
+strlist(0, s, 0);
+strcpy(dbname, defaultdatabase);
+@load;
+ini(0, "autoab", "", s, 0);
+autostart = s[0];
+window(500, 500);
+onclose(save);
+menu(0, "Close", close);
+menu(0, "Database", dbname);
+menu(0, "Calculate", calc);
+menu(0, "Mark Seen for today", seen);
+menu(0, "Help", NULL);
+menu(5, "English", help);
+menu(5, "Nederlands", helpnl);
+checkbox(10, 0, "Autostart", autostart, autostart);
+checkbox(100, 0, "Quit when empty", empty, NULL);
+radiobutton(250, 0, dm, "Day", go);
+radiobutton(320, 0, dm, "Week", go);
+radiobutton(390, 0, dm, "Month", go);
+text(0, 22, width, height - 22, 0, 0, NULL);
+texttab(0, 0, 130);
+@go;
+run;
+
+:seen;
+  putdisk(today, seen);
+  quit;
+  return;
+
+:go;
+  textclear(0);
+  strlist(4, s, 0);
+  jdfuture = jd + 7 + 24 * if (dm = 2);
+  command(TEXT, 0, VISIBLE, 0);
+  total = readopen(dbname, 1);
+  i = 0; for (i < total)
+    {
+    readrecord(0, i);
+    if (gettype(0) != 0) continue;
+    gethoroscopetime(0, birth, jdbirth);
+    if (dm = 0 && birth[1] = now[1] && birth[2] = now[2])
+      {
+      getname(0, name);
+      strset(s, "%02d%02d%s", birth[1], birth[2], name);
+      strlist(3, s, i);
+      }
+    if (dm > 0)
+      {
+      move(birth, future, 6*4);
+      future[0] = now[0];
+      real jd2 = timetojulian(future);
+      if (jd2 >= jd && jd2 <= jdfuture)
+        {
+        getname(0, name);
+        strset(s, "%02d%02d%s", birth[1], birth[2], name);
+        strlist(3, s, i);
+        }
+      }
+    if (i > 0 && i % 100 = 0)
+      {
+      strnum(s, i, 0);
+      setcaption(s);
+      }
+   }
+  strlist(5, s, 0);
+  n = strlist(2, s, 0);
+  i = 0; for (i < n)
+    {
+    k = strlist(7, s, i);
+    ndx[i] = k;
+    readrecord(0, k);
+    gethoroscopetime(0, birth, jdbirth);
+    getname(0, s);
+    getplanets(0, planet);
+    timetostring(birth, ds, ts, 1);
+    int age = (jd - jdbirth + 1) / YEAR;
+    strset(s, "%s%t%s %s %p %i %p %i %p %i Age %d", s, ds, ts, SUN, planet[SUN]/ 30, MOON, planet[MOON]/ 30, ASCENDANT, planet[ASCENDANT] / 30, age);
+    textadd(0, s);
+    if (i > 0 && i % 100 = 0)
+      {
+      strnum(s, i, 0);
+      setcaption(s);
+      }
+    }
+  readclose;
+  if (n = 0)
+    {
+    if (empty = 1 && cmdline[0] != 0)
+      @seen;
+    textadd(0, "nothing found");
+    }
+  textshow(0);
+  setfilename(dbname, "", s, 2);
+  setcaption(s);
+  return;
+
+:calc;
+  n = command(TEXT, 11, 0, 0);    ` current line
+  readopen(dbname, 1);
+  readrecord(0, ndx[n]);
+  horoscopewindow(0, 0, 1);
+  return;
+
+:close;
+  quit;
+
+:dbname;
+  if (getdbfilename("db", dbname, 1) = 1)
+    @go;
+  return;
+
+:help;
+  help("Help", "Choose a database to monitor for birthdays. Use Autostart to start this everytime planetdance starts. Use Mark Seen to dismiss for today. Click on an entry, then calculate to show it in a window.");
+  return;
+
+:helpnl;
+  help("NL Help", "Kies een database om te checken voor verjaardagen. Gebruik Autostart om dit elke keer als planetdance start te doen. Gebruik Mark Seen om voor vandaag als gezien te markeren. Klik op een geboorte en dan op Reken om de horoscoop te tonen.");
+  return;
+
+:load;
+  fileopen(inifile, FILEREADAB);
+  fileread(autostart);
+  fileread(dbname);
+  fileread(dm);
+  fileread(empty);
+  fileclose;
+  return;
+
+:save;
+  fileopen(inifile, FILEWRITEAB);
+  filewrite(autostart);
+  filewrite(dbname);
+  filewrite(dm);
+  filewrite(empty);
+  fileclose;
+  return;
+
+:autostart;
+  if (autostart = 1)
+    {
+    strset(s, "%sab\Birthdays.ab", home);
+    ini(1, "autoab", "", s, 0);
+    }
+  else
+    {
+    s[0] = 0;
+    ini(1, "autoab", "", s, 0);
+    }
+  return;

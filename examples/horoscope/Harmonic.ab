@@ -1,0 +1,16 @@
+real planet[PLANETS];
+
+real house[HOUSES];
+
+sethouses(0, house);
+
+copyhoroscope(-1, 0);
+getplanets(0, planet);
+int i, p[9];
+for (i < 14)
+   planet[i] = normalize(2 * planet[i]);
+setplanets(0, planet);
+window(800, 500);
+drawhoroscope(0, BASIC, 0, 0, width, height, p);
+run;
+

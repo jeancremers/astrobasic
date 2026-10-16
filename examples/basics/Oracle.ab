@@ -1,0 +1,40 @@
+int i, n;
+window(300, 180);
+button(30, 90, "&Start", go);
+command(BUTTON, 0,  WIDTH, 230);
+command(BUTTON, 0,  HEIGHT, 50);
+setsymbolsize(1);
+putstring(50, 20, "Press Start three times");
+menu(0, "Close", close);
+menu(0, "Help", NULL);
+menu(2, "English", help);
+menu(2, "Nederlands", helpnl);
+fontsize(15);
+timer(100, dice);   ` the dice are always rolling :)
+run;
+
+:close;
+  quit;
+  
+:help;
+  help("Help Oracle", "Press three times Go get an oracle.");
+  return;  
+
+:helpnl;
+help("NL Help Oracle", "Klik drie keer Start voor het orakel.");
+return;
+
+:dice;
+  random(99); ` advance random generator
+  return;
+
+:go;
+  switch (i)
+    {
+    :0; fill(0, 0, width, height, -2);
+        n = random(NODE); putplanet(60, 40, n); break;
+    :1; n = random(SIGNS); putsign(130, 40, n); break;
+    :2; n = random(HOUSES) + 1; putnumber(200, 40, n);
+    }
+   i = (i + 1) % 3;
+   return;
